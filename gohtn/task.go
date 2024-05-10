@@ -1,17 +1,21 @@
 package gohtn
 
 import (
+	"fmt"
 	"log"
+	"strings"
 )
 
 type Task interface {
 	Execute(state *State) (*State, error)
 	IsComplete() bool
 	Name() string
+	String() string
 }
 
 type Condition interface {
 	IsMet(state *State) bool
+	String() string
 }
 
 // FlagCondition is a simple condition that is gated by a boolean Value that can be set
@@ -25,6 +29,10 @@ func (f *FlagCondition) IsMet(state *State) bool {
 
 func (f *FlagCondition) Set(value bool) {
 	f.Value = value
+}
+
+func (f *FlagCondition) String() string {
+	return fmt.Sprintf("FlagCondition: %t", f.Value)
 }
 
 // GTECondition is a condition that is met if the given Property is GTE the specified Value
@@ -41,6 +49,10 @@ func (g *GTECondition) IsMet(state *State) bool {
 	return g.Value >= value
 }
 
+func (g *GTECondition) String() string {
+	return fmt.Sprintf("GTECondition: property %s, value %f", g.Property, g.Value)
+}
+
 // TaskCondition is a condition that is met when the given Task is complete
 type TaskCondition struct {
 	Task Task
@@ -48,6 +60,10 @@ type TaskCondition struct {
 
 func (t *TaskCondition) IsMet(state *State) bool {
 	return t.Task.IsComplete()
+}
+
+func (t *TaskCondition) String() string {
+	return fmt.Sprintf("TaskCondition: %s, complete: %t", t.Task.Name(), t.Task.IsComplete())
 }
 
 // Action is an action applied by a Task.
@@ -72,7 +88,11 @@ func NewPrimitiveTask(name string, preconditions []Condition, action Action) *Pr
 }
 
 func (t *PrimitiveTask) Execute(state *State) (*State, error) {
-	log.Printf("executing Task %s", t.name)
+	preconditions := make([]string, 0)
+	for _, condition := range t.preconditions {
+		preconditions = append(preconditions, condition.String())
+	}
+	log.Printf("executing Task %s, preconditions %s", t.name, strings.Join(preconditions, ","))
 	// Determine if the Task preconditions have been met
 	var ready = true
 	for _, condition := range t.preconditions {
@@ -100,6 +120,14 @@ func (t *PrimitiveTask) IsComplete() bool {
 
 func (t *PrimitiveTask) Name() string {
 	return t.name
+}
+
+func (t *PrimitiveTask) String() string {
+	preconditions := make([]string, 0)
+	for _, condition := range t.preconditions {
+		preconditions = append(preconditions, condition.String())
+	}
+	return fmt.Sprintf("[%s] preconditions: [%s], complete: %t", t.name, strings.Join(preconditions, ","), t.complete)
 }
 
 // GoalTask implements the HTN goal Task, composed of preconditions that are other Tasks.  The goal Task is considered
@@ -138,4 +166,12 @@ func (g *GoalTask) IsComplete() bool {
 
 func (g *GoalTask) Name() string {
 	return "goal"
+}
+
+func (g *GoalTask) String() string {
+	preconditions := make([]string, 0)
+	for _, condition := range g.preconditions {
+		preconditions = append(preconditions, condition.String())
+	}
+	return fmt.Sprintf("goal: preconditions: [%s], complete: %t", strings.Join(preconditions, ","), g.complete)
 }

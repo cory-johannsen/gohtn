@@ -156,7 +156,7 @@ func main() {
 		if !betaFlag.Value && iteration > 9 {
 			betaFlag.Set(true)
 		}
-		if !alphaFlag.Value && iteration > 6 {
+		if !gammaFlag.Value && iteration > 6 {
 			gammaFlag.Set(true)
 		}
 
