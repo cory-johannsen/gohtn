@@ -175,3 +175,97 @@ func (g *GoalTask) String() string {
 	}
 	return fmt.Sprintf("goal: preconditions: [%s], complete: %t", strings.Join(preconditions, ","), g.complete)
 }
+
+type Method struct {
+	conditions []Condition
+	tasks      []Task
+	name       string
+}
+
+func NewMethod(name string, conditions []Condition, tasks []Task) *Method {
+	return &Method{
+		name:       name,
+		conditions: conditions,
+		tasks:      tasks,
+	}
+}
+
+func (m *Method) Applies(state *State) bool {
+	for _, condition := range m.conditions {
+		if !condition.IsMet(state) {
+			return false
+		}
+	}
+	return true
+}
+
+func (m *Method) Execute(state *State) (*State, error) {
+	for _, task := range m.tasks {
+		if !task.IsComplete() {
+			_, err := task.Execute(state)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return state, nil
+}
+
+func (m *Method) String() string {
+	conditions := make([]string, 0)
+	for _, condition := range m.conditions {
+		conditions = append(conditions, condition.String())
+	}
+	tasks := make([]string, 0)
+	for _, task := range m.tasks {
+		tasks = append(tasks, task.String())
+	}
+	return fmt.Sprintf("Method %s: conditions: [%s], tasks: [%s]", m.name, strings.Join(conditions, ","), strings.Join(tasks, ","))
+}
+
+// CompoundTask implements the HTN compound task, which consists of a ranked list of methods and a name.
+// The task selects a method at execution time by checking the conditions on each.  Since the method list
+// is in priority order, the first match is selected when more than one apply.
+type CompoundTask struct {
+	methods []*Method
+	name    string
+}
+
+func NewCompoundTask(name string, methods []*Method) *CompoundTask {
+	return &CompoundTask{
+		name:    name,
+		methods: methods,
+	}
+}
+
+func (c *CompoundTask) Execute(state *State) (*State, error) {
+	applicableMethods := make([]*Method, 0)
+	for _, method := range c.methods {
+		if method.Applies(state) {
+			applicableMethods = append(applicableMethods, method)
+		}
+	}
+	if len(applicableMethods) == 0 {
+		return state, nil
+	}
+	// The methods are stored in priority order, so the first one is the selected choice
+	selectedMethod := applicableMethods[0]
+	_, err := selectedMethod.Execute(state)
+	if err != nil {
+		return nil, err
+	}
+
+	return state, nil
+}
+
+func (c *CompoundTask) Name() string {
+	return c.name
+}
+
+func (c *CompoundTask) String() string {
+	methods := make([]string, 0)
+	for _, method := range c.methods {
+		methods = append(methods, method.String())
+	}
+	return fmt.Sprintf("CompoundTask %s: methods: [%s]", c.name, strings.Join(methods, ","))
+}
