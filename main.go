@@ -9,10 +9,10 @@ import (
 )
 
 func main() {
-	alpha := gohtn.NewSimpleSensor(0.5)
-	beta := gohtn.NewSimpleSensor(0.5)
-	gamma := gohtn.NewSimpleSensor(0.5)
-	iterations := gohtn.NewSimpleSensor(0)
+	alpha := gohtn.NewSimpleSensor("alpha", 0.5)
+	beta := gohtn.NewSimpleSensor("beta", 0.5)
+	gamma := gohtn.NewSimpleSensor("gamma", 0.5)
+	iterations := gohtn.NewSimpleSensor("iterations", 0)
 	// Initialize the state from the sensors
 	state := gohtn.NewState(
 		[]gohtn.Sensor{
@@ -21,11 +21,19 @@ func main() {
 			gamma,
 			iterations,
 		},
-		map[string]gohtn.Sensor{
-			"alpha":      alpha,
-			"beta":       beta,
-			"gamma":      gamma,
-			"iterations": iterations,
+		map[string]gohtn.Property{
+			"alpha": func(state *gohtn.State) float64 {
+				return alpha.Value
+			},
+			"beta": func(state *gohtn.State) float64 {
+				return beta.Value
+			},
+			"gamma": func(state *gohtn.State) float64 {
+				return gamma.Value
+			},
+			"iterations": func(state *gohtn.State) float64 {
+				return iterations.Value
+			},
 		})
 
 	alphaFlag := gohtn.FlagCondition{Value: false}
@@ -101,7 +109,7 @@ func main() {
 		falseMethod,
 	})
 
-	goal := gohtn.NewGoalTask(
+	goal := gohtn.NewGoalTask("goal",
 		[]gohtn.TaskCondition{
 			{
 				Task: alphaTask,
@@ -182,15 +190,15 @@ func main() {
 			gammaFlag.Set(true)
 		}
 
-		alphaValue, err := alpha.Value()
+		alphaValue, err := alpha.Get()
 		if err != nil {
 			panic(err)
 		}
-		betaValue, err := beta.Value()
+		betaValue, err := beta.Get()
 		if err != nil {
 			panic(err)
 		}
-		gammaValue, err := gamma.Value()
+		gammaValue, err := gamma.Get()
 		if err != nil {
 			panic(err)
 		}

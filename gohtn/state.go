@@ -5,68 +5,44 @@ import (
 	"strings"
 )
 
-// Sensor are represented by a generic 64 bit floating point Value.
-type Sensor interface {
-	Value() (float64, error)
-	String() string
-}
+// Property is a function that accepts the state and returns a float64.
+type Property func(state *State) float64
 
-// SimpleSensor stores a single float64 Value and allows it to be set
-type SimpleSensor struct {
-	value float64
-}
-
-func NewSimpleSensor(value float64) *SimpleSensor {
-	return &SimpleSensor{value}
-}
-
-func (s *SimpleSensor) Value() (float64, error) {
-	return s.value, nil
-}
-
-func (s *SimpleSensor) Set(value float64) {
-	s.value = value
-}
-
-func (s *SimpleSensor) String() string {
-	return fmt.Sprintf("%f", s.value)
-}
-
-// State is represented as an array of Sensors.
-// For simplicity each Property in the state currently corresponds to exactly one sensor.
+// State is represented as an array of Sensors and a map of named Properties.
 type State struct {
-	sensors    []Sensor
-	properties map[string]Sensor
+	Sensors    []Sensor            `json:"sensors"`
+	Properties map[string]Property `json:"properties"`
 }
 
-func NewState(sensors []Sensor, properties map[string]Sensor) *State {
-	return &State{sensors: sensors, properties: properties}
+func NewState(sensors []Sensor, properties map[string]Property) *State {
+	return &State{Sensors: sensors, Properties: properties}
 }
 
 func (s *State) Property(name string) (float64, error) {
-	sensor, ok := s.properties[name]
+	property, ok := s.Properties[name]
 	if !ok {
 		return 0, fmt.Errorf("no Property with name %s", name)
 	}
-	return sensor.Value()
+	return property(s), nil
 }
 
 func (s *State) Sensor(name string) (Sensor, error) {
-	sensor, ok := s.properties[name]
-	if !ok {
-		return nil, fmt.Errorf("no Property with name %s", name)
+	for _, sensor := range s.Sensors {
+		if sensor.Name() == name {
+			return sensor, nil
+		}
 	}
-	return sensor, nil
+	return nil, fmt.Errorf("no sensor with name %s", name)
 }
 
 func (s *State) String() string {
 	sensors := make([]string, 0)
-	for i := range s.sensors {
-		sensors = append(sensors, s.sensors[i].String())
+	for i := range s.Sensors {
+		sensors = append(sensors, fmt.Sprintf("{%s}", s.Sensors[i].String()))
 	}
 	properties := make([]string, 0)
-	for k, v := range s.properties {
-		properties = append(properties, fmt.Sprintf("%s=%s", k, v))
+	for k, v := range s.Properties {
+		properties = append(properties, fmt.Sprintf("%s=%v", k, v(s)))
 	}
 	return fmt.Sprintf("sensors: %s, properties: %s", strings.Join(sensors, ","), strings.Join(properties, ","))
 }
