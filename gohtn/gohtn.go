@@ -20,10 +20,10 @@ type Planner struct {
 }
 
 func evaluateNode(node *TaskNode, state *State) []Task {
-	log.Printf("evaluating node %s", node.Task.String())
+	log.Printf("evaluating node {%s}", node.Task.String())
 	tasks := make([]Task, 0)
 	if !node.Task.IsComplete() {
-		log.Printf("node %s is not complete", node.Task.String())
+		log.Printf("node {%s} is not complete", node.Task.String())
 		tasks = append(tasks, node.Task)
 	}
 	for _, child := range node.Children {

@@ -59,7 +59,7 @@ func (g *GTECondition) IsMet(state *State) bool {
 	if err != nil {
 		return false
 	}
-	return g.Value >= value
+	return value >= g.Value
 }
 
 func (g *GTECondition) String() string {
@@ -105,17 +105,18 @@ func (t *PrimitiveTask) Execute(state *State) (*State, error) {
 	for _, condition := range t.preconditions {
 		preconditions = append(preconditions, condition.String())
 	}
-	log.Printf("executing Task %s, preconditions %s", t.name, strings.Join(preconditions, ","))
+	log.Printf("executing Task {%s}, preconditions {%s}", t.name, strings.Join(preconditions, ","))
 	// Determine if the Task preconditions have been met
 	var ready = true
 	for _, condition := range t.preconditions {
+		log.Printf("evaluating condition {%s}", condition.String())
 		if !condition.IsMet(state) {
 			ready = false
 			break
 		}
 	}
 	if ready {
-		log.Printf("Task %s preconditions met, applying Task action", t.name)
+		log.Printf("Task {%s} preconditions met, applying Task action", t.name)
 		// Apply the Task action and update the state
 		err := t.action(state)
 		if err != nil {
@@ -184,7 +185,7 @@ func (g *GoalTask) Name() string {
 func (g *GoalTask) String() string {
 	preconditions := make([]string, 0)
 	for _, condition := range g.preconditions {
-		preconditions = append(preconditions, condition.String())
+		preconditions = append(preconditions, fmt.Sprintf("{%s}", condition.String()))
 	}
 	return fmt.Sprintf("goal: preconditions: [%s], complete: %t", strings.Join(preconditions, ","), g.complete)
 }
@@ -204,10 +205,10 @@ func NewMethod(name string, conditions []Condition, tasks []Task) *Method {
 }
 
 func (m *Method) Applies(state *State) bool {
-	log.Printf("checking if method %s applies", m.name)
+	log.Printf("checking if method {%s} applies", m.name)
 	for _, condition := range m.conditions {
 		if !condition.IsMet(state) {
-			log.Printf("method %s condition %s not met, exiting", m.name, condition.String())
+			log.Printf("method {%s} condition {%s} not met, exiting", m.name, condition.String())
 			return false
 		}
 	}
@@ -215,10 +216,10 @@ func (m *Method) Applies(state *State) bool {
 }
 
 func (m *Method) Execute(state *State) (*State, error) {
-	log.Printf("executing method %s", m.name)
+	log.Printf("executing method {%s}", m.name)
 	for _, task := range m.tasks {
 		if !task.IsComplete() {
-			log.Printf("method %s task %s not complete, executing it", m.name, task.String())
+			log.Printf("method {%s} task {%s} not complete, executing it", m.name, task.String())
 			_, err := task.Execute(state)
 			if err != nil {
 				return nil, err
@@ -231,11 +232,11 @@ func (m *Method) Execute(state *State) (*State, error) {
 func (m *Method) String() string {
 	conditions := make([]string, 0)
 	for _, condition := range m.conditions {
-		conditions = append(conditions, condition.String())
+		conditions = append(conditions, fmt.Sprintf("{%s}", condition.String()))
 	}
 	tasks := make([]string, 0)
 	for _, task := range m.tasks {
-		tasks = append(tasks, task.String())
+		tasks = append(tasks, fmt.Sprintf("{%s}", task.String()))
 	}
 	return fmt.Sprintf("Method %s: conditions: [%s], tasks: [%s]", m.name, strings.Join(conditions, ","), strings.Join(tasks, ","))
 }
@@ -257,7 +258,7 @@ func NewCompoundTask(name string, methods []*Method) *CompoundTask {
 }
 
 func (c *CompoundTask) Execute(state *State) (*State, error) {
-	log.Printf("executing compound task %s", c.name)
+	log.Printf("executing compound task {%s}", c.name)
 	applicableMethods := make([]*Method, 0)
 	for _, method := range c.methods {
 		if method.Applies(state) {
@@ -289,7 +290,7 @@ func (c *CompoundTask) IsComplete() bool {
 func (c *CompoundTask) String() string {
 	methods := make([]string, 0)
 	for _, method := range c.methods {
-		methods = append(methods, method.String())
+		methods = append(methods, fmt.Sprintf("{%s}", method.String()))
 	}
 	return fmt.Sprintf("CompoundTask %s: methods: [%s]", c.name, strings.Join(methods, ","))
 }

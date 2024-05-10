@@ -137,6 +137,7 @@ func main() {
 		Tasks: tasks,
 	}
 
+	maxIterations := 25
 	var iteration = 0
 	for {
 		log.Printf("iteration %d", iteration)
@@ -154,17 +155,21 @@ func main() {
 			log.Println("goal reached")
 			break
 		}
+		if iteration > maxIterations {
+			log.Println("max iterations reached")
+			break
+		}
 
 		iteration++
 
 		// flip the flags on different iterations
-		if !alphaFlag.Value && iteration > 3 {
+		if !alphaFlag.Value && iteration > 2 {
 			alphaFlag.Set(true)
 		}
-		if !betaFlag.Value && iteration > 9 {
+		if !betaFlag.Value && iteration > 3 {
 			betaFlag.Set(true)
 		}
-		if !gammaFlag.Value && iteration > 6 {
+		if !gammaFlag.Value && iteration > 5 {
 			gammaFlag.Set(true)
 		}
 
