@@ -66,6 +66,23 @@ func (g *GTECondition) String() string {
 	return fmt.Sprintf("GTECondition: property %s, value %f", g.Property, g.Value)
 }
 
+type LTECondition struct {
+	Value    float64
+	Property string
+}
+
+func (l *LTECondition) IsMet(state *State) bool {
+	value, err := state.Property(l.Property)
+	if err != nil {
+		return false
+	}
+	return value <= l.Value
+}
+
+func (l *LTECondition) String() string {
+	return fmt.Sprintf("LTECondition: property %s, value %f", l.Property, l.Value)
+}
+
 // TaskCondition is a condition that is met when the given Task is complete
 type TaskCondition struct {
 	Task Task
@@ -215,18 +232,24 @@ func (m *Method) Applies(state *State) bool {
 	return true
 }
 
-func (m *Method) Execute(state *State) (*State, error) {
+func (m *Method) Execute(state *State) (int64, error) {
 	log.Printf("executing method {%s}", m.name)
+	var executed = int64(0)
+	tasks := make([]Task, 0)
 	for _, task := range m.tasks {
+		tasks = append([]Task{task}, tasks...)
+	}
+	for _, task := range tasks {
 		if !task.IsComplete() {
 			log.Printf("method {%s} task {%s} not complete, executing it", m.name, task.String())
 			_, err := task.Execute(state)
 			if err != nil {
-				return nil, err
+				return -1, err
 			}
+			executed++
 		}
 	}
-	return state, nil
+	return executed, nil
 }
 
 func (m *Method) String() string {
@@ -267,13 +290,17 @@ func (c *CompoundTask) Execute(state *State) (*State, error) {
 	}
 	if len(applicableMethods) == 0 {
 		log.Println("no applicable methods found")
+		c.complete = true
 		return state, nil
 	}
 	// The methods are stored in priority order, so the first one is the selected choice
 	selectedMethod := applicableMethods[0]
-	_, err := selectedMethod.Execute(state)
+	executedTasks, err := selectedMethod.Execute(state)
 	if err != nil {
 		return nil, err
+	}
+	if executedTasks == 0 {
+		c.complete = true
 	}
 
 	return state, nil
@@ -284,7 +311,7 @@ func (c *CompoundTask) Name() string {
 }
 
 func (c *CompoundTask) IsComplete() bool {
-	return false
+	return c.complete
 }
 
 func (c *CompoundTask) String() string {

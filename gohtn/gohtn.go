@@ -28,7 +28,9 @@ func evaluateNode(node *TaskNode, state *State) []Task {
 	}
 	for _, child := range node.Children {
 		childTasks := evaluateNode(child, state)
-		tasks = append(tasks, childTasks...)
+		for _, childTask := range childTasks {
+			tasks = append([]Task{childTask}, tasks...)
+		}
 	}
 	return tasks
 }

@@ -1,26 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"github.com/cory-johannsen/gohtn/gohtn"
 	"log"
 	"math/rand"
+	"strings"
 )
 
 func main() {
 	alpha := gohtn.NewSimpleSensor(0.5)
 	beta := gohtn.NewSimpleSensor(0.5)
 	gamma := gohtn.NewSimpleSensor(0.5)
+	iterations := gohtn.NewSimpleSensor(0)
 	// Initialize the state from the sensors
 	state := gohtn.NewState(
 		[]gohtn.Sensor{
 			alpha,
 			beta,
 			gamma,
+			iterations,
 		},
 		map[string]gohtn.Sensor{
-			"alpha": alpha,
-			"beta":  beta,
-			"gamma": gamma,
+			"alpha":      alpha,
+			"beta":       beta,
+			"gamma":      gamma,
+			"iterations": iterations,
 		})
 
 	alphaFlag := gohtn.FlagCondition{Value: false}
@@ -82,13 +87,15 @@ func main() {
 		&gammaGTE,
 	}, gammaAction)
 
-	// Construct a compound task that has 2 methods.  The choice is based on a simple boolean condition.
+	// Construct a compound task that has 2 methods.  The choice is based on a simple boolean conditions.
+	// Place a max iteration counter condition to force task completion
+	iterationFlag := &gohtn.LTECondition{Value: 11, Property: "iterations"}
 	trueFlag := &gohtn.FlagCondition{Value: false}
 	falseFlag := &gohtn.NotFlagCondition{
 		FlagCondition: *trueFlag,
 	}
-	trueMethod := gohtn.NewMethod("true", []gohtn.Condition{trueFlag}, []gohtn.Task{})
-	falseMethod := gohtn.NewMethod("false", []gohtn.Condition{falseFlag}, []gohtn.Task{})
+	trueMethod := gohtn.NewMethod("true", []gohtn.Condition{iterationFlag, trueFlag}, []gohtn.Task{})
+	falseMethod := gohtn.NewMethod("false", []gohtn.Condition{iterationFlag, falseFlag}, []gohtn.Task{})
 	compoundTask := gohtn.NewCompoundTask("compound", []*gohtn.Method{
 		trueMethod,
 		falseMethod,
@@ -137,7 +144,6 @@ func main() {
 		Tasks: tasks,
 	}
 
-	maxIterations := 25
 	var iteration = 0
 	for {
 		log.Printf("iteration %d", iteration)
@@ -145,22 +151,25 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		// We are done when the planner can not find and tasks left to execute
+		if len(plan) == 0 {
+			log.Println("no tasks to execute")
+			break
+		}
+		planTasks := make([]string, 0)
+		for _, task := range plan {
+			planTasks = append(planTasks, fmt.Sprintf("{%s}", task.String()))
+		}
+		log.Printf("executing plan {%s}", strings.Join(planTasks, ","))
 		result, err := gohtn.Execute(plan, state)
 		if err != nil {
 			panic(err)
 		}
 		log.Printf("state after iteration: %d: %s", iteration, result.String())
 
-		if goal.IsComplete() {
-			log.Println("goal reached")
-			break
-		}
-		if iteration > maxIterations {
-			log.Println("max iterations reached")
-			break
-		}
-
+		// Update the sensors to move the workflow forwards
 		iteration++
+		iterations.Set(float64(iteration))
 
 		// flip the flags on different iterations
 		if !alphaFlag.Value && iteration > 2 {
@@ -173,7 +182,6 @@ func main() {
 			gammaFlag.Set(true)
 		}
 
-		// increment the sensors to allow the plan to progress towards the goal
 		alphaValue, err := alpha.Value()
 		if err != nil {
 			panic(err)
