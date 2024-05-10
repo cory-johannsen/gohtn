@@ -3,36 +3,70 @@ package main
 import (
 	"fmt"
 	"github.com/cory-johannsen/gohtn/gohtn"
+	"github.com/cory-johannsen/gohtn/loader"
 	"log"
 	"math/rand"
 	"strings"
 )
 
 func main() {
-	alpha := gohtn.NewSimpleSensor("alpha", 0.5)
-	beta := gohtn.NewSimpleSensor("beta", 0.5)
-	gamma := gohtn.NewSimpleSensor("gamma", 0.5)
-	iterations := gohtn.NewSimpleSensor("iterations", 0)
+	cfg, err := loader.LoadConfig("config.json")
+	sensors, err := loader.LoadSensors(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Loaded %d sensors", len(sensors))
+	for _, sensor := range sensors {
+		log.Printf("%s", sensor.String())
+	}
+
 	// Initialize the state from the sensors
 	state := gohtn.NewState(
-		[]gohtn.Sensor{
-			alpha,
-			beta,
-			gamma,
-			iterations,
-		},
+		sensors,
 		map[string]gohtn.Property{
 			"alpha": func(state *gohtn.State) float64 {
-				return alpha.Value
+				sensor, err := state.Sensor("alpha")
+				if err != nil {
+					log.Fatal(err)
+				}
+				val, err := sensor.Get()
+				if err != nil {
+					log.Fatal(err)
+				}
+				return val
 			},
 			"beta": func(state *gohtn.State) float64 {
-				return beta.Value
+				sensor, err := state.Sensor("beta")
+				if err != nil {
+					log.Fatal(err)
+				}
+				val, err := sensor.Get()
+				if err != nil {
+					log.Fatal(err)
+				}
+				return val
 			},
 			"gamma": func(state *gohtn.State) float64 {
-				return gamma.Value
+				sensor, err := state.Sensor("gamma")
+				if err != nil {
+					log.Fatal(err)
+				}
+				val, err := sensor.Get()
+				if err != nil {
+					log.Fatal(err)
+				}
+				return val
 			},
 			"iterations": func(state *gohtn.State) float64 {
-				return iterations.Value
+				sensor, err := state.Sensor("iterations")
+				if err != nil {
+					log.Fatal(err)
+				}
+				val, err := sensor.Get()
+				if err != nil {
+					log.Fatal(err)
+				}
+				return val
 			},
 		})
 
@@ -184,7 +218,11 @@ func main() {
 
 		// Update the sensors to move the workflow forwards
 		iteration++
-		iterations.Set(float64(iteration))
+		iterations, err := state.Sensor("iterations")
+		if err != nil {
+			panic(err)
+		}
+		iterations.(*gohtn.SimpleSensor).Set(float64(iteration))
 
 		// flip the flags on different iterations
 		if !alphaFlag.Value && iteration > 2 {
@@ -197,7 +235,16 @@ func main() {
 			gammaFlag.Set(true)
 		}
 
+		alpha, err := state.Sensor("alpha")
+		if err != nil {
+			panic(err)
+		}
 		alphaValue, err := alpha.Get()
+		if err != nil {
+			panic(err)
+		}
+
+		beta, err := state.Sensor("beta")
 		if err != nil {
 			panic(err)
 		}
@@ -205,13 +252,18 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		gamma, err := state.Sensor("gamma")
+		if err != nil {
+			panic(err)
+		}
 		gammaValue, err := gamma.Get()
 		if err != nil {
 			panic(err)
 		}
-		alpha.Set(alphaValue + 0.01)
-		beta.Set(betaValue + 0.01)
-		gamma.Set(gammaValue + 0.01)
+		alpha.(*gohtn.SimpleSensor).Set(alphaValue + 0.01)
+		beta.(*gohtn.SimpleSensor).Set(betaValue + 0.01)
+		gamma.(*gohtn.SimpleSensor).Set(gammaValue + 0.01)
 
 		// flip a coin and set the compound task flag
 		flip := rand.Intn(2) == 1
