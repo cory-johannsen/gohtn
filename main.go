@@ -3,10 +3,10 @@ package main
 import (
 	"github.com/cory-johannsen/gohtn/gohtn"
 	"log"
+	"math/rand"
 )
 
 func main() {
-	// Define three simple sensors that will be used to feed the state
 	alpha := gohtn.NewSimpleSensor(0.5)
 	beta := gohtn.NewSimpleSensor(0.5)
 	gamma := gohtn.NewSimpleSensor(0.5)
@@ -82,6 +82,18 @@ func main() {
 		&gammaGTE,
 	}, gammaAction)
 
+	// Construct a compound task that has 2 methods.  The choice is based on a simple boolean condition.
+	trueFlag := &gohtn.FlagCondition{Value: false}
+	falseFlag := &gohtn.NotFlagCondition{
+		FlagCondition: *trueFlag,
+	}
+	trueMethod := gohtn.NewMethod("true", []gohtn.Condition{trueFlag}, []gohtn.Task{})
+	falseMethod := gohtn.NewMethod("false", []gohtn.Condition{falseFlag}, []gohtn.Task{})
+	compoundTask := gohtn.NewCompoundTask("compound", []*gohtn.Method{
+		trueMethod,
+		falseMethod,
+	})
+
 	goal := gohtn.NewGoalTask(
 		[]gohtn.TaskCondition{
 			{
@@ -92,6 +104,9 @@ func main() {
 			},
 			{
 				Task: gammaTask,
+			},
+			{
+				Task: compoundTask,
 			},
 		})
 	tasks := &gohtn.TaskGraph{
@@ -110,6 +125,10 @@ func main() {
 							Children: []*gohtn.TaskNode{},
 						},
 					},
+				},
+				{
+					Task:     compoundTask,
+					Children: []*gohtn.TaskNode{},
 				},
 			},
 		},
@@ -165,5 +184,9 @@ func main() {
 		alpha.Set(alphaValue + 0.01)
 		beta.Set(betaValue + 0.01)
 		gamma.Set(gammaValue + 0.01)
+
+		// flip a coin and set the compound task flag
+		flip := rand.Intn(2) == 1
+		trueFlag.Set(flip)
 	}
 }

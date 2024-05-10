@@ -35,6 +35,19 @@ func (f *FlagCondition) String() string {
 	return fmt.Sprintf("FlagCondition: %t", f.Value)
 }
 
+// NotFlagCondition embeds a FlagCondition and inverts the behavior
+type NotFlagCondition struct {
+	FlagCondition
+}
+
+func (n *NotFlagCondition) IsMet(state *State) bool {
+	return !n.FlagCondition.IsMet(state)
+}
+
+func (n *NotFlagCondition) String() string {
+	return fmt.Sprintf("NotFlagCondition: %t", n.FlagCondition.Value)
+}
+
 // GTECondition is a condition that is met if the given Property is GTE the specified Value
 type GTECondition struct {
 	Value    float64
@@ -191,8 +204,10 @@ func NewMethod(name string, conditions []Condition, tasks []Task) *Method {
 }
 
 func (m *Method) Applies(state *State) bool {
+	log.Printf("checking if method %s applies", m.name)
 	for _, condition := range m.conditions {
 		if !condition.IsMet(state) {
+			log.Printf("method %s condition %s not met, exiting", m.name, condition.String())
 			return false
 		}
 	}
@@ -200,8 +215,10 @@ func (m *Method) Applies(state *State) bool {
 }
 
 func (m *Method) Execute(state *State) (*State, error) {
+	log.Printf("executing method %s", m.name)
 	for _, task := range m.tasks {
 		if !task.IsComplete() {
+			log.Printf("method %s task %s not complete, executing it", m.name, task.String())
 			_, err := task.Execute(state)
 			if err != nil {
 				return nil, err
@@ -227,8 +244,9 @@ func (m *Method) String() string {
 // The task selects a method at execution time by checking the conditions on each.  Since the method list
 // is in priority order, the first match is selected when more than one apply.
 type CompoundTask struct {
-	methods []*Method
-	name    string
+	methods  []*Method
+	name     string
+	complete bool
 }
 
 func NewCompoundTask(name string, methods []*Method) *CompoundTask {
@@ -239,6 +257,7 @@ func NewCompoundTask(name string, methods []*Method) *CompoundTask {
 }
 
 func (c *CompoundTask) Execute(state *State) (*State, error) {
+	log.Printf("executing compound task %s", c.name)
 	applicableMethods := make([]*Method, 0)
 	for _, method := range c.methods {
 		if method.Applies(state) {
@@ -246,6 +265,7 @@ func (c *CompoundTask) Execute(state *State) (*State, error) {
 		}
 	}
 	if len(applicableMethods) == 0 {
+		log.Println("no applicable methods found")
 		return state, nil
 	}
 	// The methods are stored in priority order, so the first one is the selected choice
@@ -260,6 +280,10 @@ func (c *CompoundTask) Execute(state *State) (*State, error) {
 
 func (c *CompoundTask) Name() string {
 	return c.name
+}
+
+func (c *CompoundTask) IsComplete() bool {
+	return false
 }
 
 func (c *CompoundTask) String() string {
