@@ -17,8 +17,8 @@ The current implementation contains the following simplifications:
 
 Supported tasks:
 - Primitive tasks with multiple conditions.  The task will execute when all conditions are met
-- Compound tasks with multiple methods.  Each method is a set of conditions and tasks, and the compound tasks selects and executes a method given the state.
-- Goal tasks with multiple task conditions.  A task condition is a condition that is satisfied when a task completes.
+- Compound tasks with multiple methods.  Each method is a set of conditions and tasks, and the compound task selects and executes a method given the state. Compound tasks allow for hierarchical topology.
+- Goal tasks with multiple task conditions.  A task condition is a condition that is satisfied when a task completes. The goal is met when all task conditions are satisfied.
 
 References:
 - https://en.wikipedia.org/wiki/Hierarchical_task_network
