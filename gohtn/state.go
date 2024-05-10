@@ -1,10 +1,14 @@
 package gohtn
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Sensor are represented by a generic 64 bit floating point Value.
 type Sensor interface {
 	Value() (float64, error)
+	String() string
 }
 
 // SimpleSensor stores a single float64 Value and allows it to be set
@@ -22,6 +26,10 @@ func (s *SimpleSensor) Value() (float64, error) {
 
 func (s *SimpleSensor) Set(value float64) {
 	s.value = value
+}
+
+func (s *SimpleSensor) String() string {
+	return fmt.Sprintf("%f", s.value)
 }
 
 // State is represented as an array of Sensors.
@@ -49,4 +57,16 @@ func (s *State) Sensor(name string) (Sensor, error) {
 		return nil, fmt.Errorf("no Property with name %s", name)
 	}
 	return sensor, nil
+}
+
+func (s *State) String() string {
+	sensors := make([]string, 0)
+	for i := range s.sensors {
+		sensors = append(sensors, s.sensors[i].String())
+	}
+	properties := make([]string, 0)
+	for k, v := range s.properties {
+		properties = append(properties, fmt.Sprintf("%s=%s", k, v))
+	}
+	return fmt.Sprintf("sensors: %s, properties: %s", strings.Join(sensors, ","), strings.Join(properties, ","))
 }
