@@ -37,9 +37,10 @@ func main() {
 		})
 
 	alphaFlag := gohtn.FlagCondition{Value: false}
-	alphaGTE := gohtn.GTECondition{
-		Value:    0.65,
-		Property: "beta",
+	alphaGTE := gohtn.ComparisonCondition{
+		Comparison: gohtn.GTE,
+		Value:      0.65,
+		Property:   "beta",
 	}
 	alphaAction := func(state *gohtn.State) error {
 		current, err := state.Property("beta")
@@ -60,9 +61,10 @@ func main() {
 	}, alphaAction)
 
 	betaFlag := gohtn.FlagCondition{Value: false}
-	betaGTE := gohtn.GTECondition{
-		Value:    0.95,
-		Property: "beta",
+	betaGTE := gohtn.ComparisonCondition{
+		Comparison: gohtn.GTE,
+		Value:      0.95,
+		Property:   "beta",
 	}
 	betaAction := func(state *gohtn.State) error {
 		current, err := state.Property("gamma")
@@ -83,9 +85,10 @@ func main() {
 	}, betaAction)
 
 	gammaFlag := gohtn.FlagCondition{Value: false}
-	gammaGTE := gohtn.GTECondition{
-		Value:    0.85,
-		Property: "gamma",
+	gammaGTE := gohtn.ComparisonCondition{
+		Comparison: gohtn.GTE,
+		Value:      0.85,
+		Property:   "gamma",
 	}
 	gammaAction := func(state *gohtn.State) error {
 		return nil
@@ -97,7 +100,11 @@ func main() {
 
 	// Construct a compound task that has 2 methods.  The choice is based on a simple boolean conditions.
 	// Place a max iteration counter condition to force task completion
-	iterationFlag := &gohtn.LTECondition{Value: 11, Property: "iterations"}
+	iterationFlag := &gohtn.ComparisonCondition{
+		Comparison: gohtn.LTE,
+		Value:      11,
+		Property:   "iterations",
+	}
 	trueFlag := &gohtn.FlagCondition{Value: false}
 	falseFlag := &gohtn.NotFlagCondition{
 		FlagCondition: *trueFlag,

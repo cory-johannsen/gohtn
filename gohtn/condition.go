@@ -37,39 +37,48 @@ func (n *NotFlagCondition) String() string {
 	return fmt.Sprintf("NotFlagCondition: %t", n.FlagCondition.Value)
 }
 
-// GTECondition is a condition that is met if the given Property is GTE the specified Value
-type GTECondition struct {
-	Value    float64 `json:"value"`
-	Property string  `json:"property"`
+type Comparison string
+
+const (
+	EQ  Comparison = "=="
+	NEQ Comparison = "!="
+	LT  Comparison = "<"
+	LTE Comparison = "<="
+	GT  Comparison = ">"
+	GTE Comparison = ">="
+)
+
+// ComparisonCondition is a condition that is met if the given Property compares to the specified Value using the given Comparison function
+type ComparisonCondition struct {
+	Comparison Comparison `json:"comparison"`
+	Value      float64    `json:"value"`
+	Property   string     `json:"property"`
 }
 
-func (g *GTECondition) IsMet(state *State) bool {
+func (g *ComparisonCondition) IsMet(state *State) bool {
 	value, err := state.Property(g.Property)
 	if err != nil {
 		return false
 	}
-	return value >= g.Value
-}
-
-func (g *GTECondition) String() string {
-	return fmt.Sprintf("GTECondition: property %s, value %f", g.Property, g.Value)
-}
-
-type LTECondition struct {
-	Value    float64 `json:"value"`
-	Property string  `json:"property"`
-}
-
-func (l *LTECondition) IsMet(state *State) bool {
-	value, err := state.Property(l.Property)
-	if err != nil {
-		return false
+	switch g.Comparison {
+	case EQ:
+		return value >= g.Value
+	case NEQ:
+		return value != g.Value
+	case LT:
+		return value < g.Value
+	case LTE:
+		return value <= g.Value
+	case GT:
+		return value > g.Value
+	case GTE:
+		return value >= g.Value
 	}
-	return value <= l.Value
+	return false
 }
 
-func (l *LTECondition) String() string {
-	return fmt.Sprintf("LTECondition: property %s, value %f", l.Property, l.Value)
+func (g *ComparisonCondition) String() string {
+	return fmt.Sprintf("ComparisonCondition: property %s, value %f, comparison %s", g.Property, g.Value, g.Comparison)
 }
 
 // TaskCondition is a condition that is met when the given Task is complete
