@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/cory-johannsen/gohtn/gohtn"
 	"log"
 )
@@ -53,16 +52,16 @@ func main() {
 		Property: "beta",
 	}
 	betaAction := func(state *gohtn.State) error {
-		current, err := state.Property("beta")
+		current, err := state.Property("gamma")
 		if err != nil {
 			return err
 		}
-		sensor, err := state.Sensor("beta")
+		sensor, err := state.Sensor("gamma")
 		if err != nil {
 			return err
 		}
-		betaSensor := sensor.(*gohtn.SimpleSensor)
-		betaSensor.Set(current + 0.10)
+		gammaSensor := sensor.(*gohtn.SimpleSensor)
+		gammaSensor.Set(current + 0.20)
 		return nil
 	}
 	betaTask := gohtn.NewPrimitiveTask("beta", []gohtn.Condition{
@@ -76,16 +75,6 @@ func main() {
 		Property: "gamma",
 	}
 	gammaAction := func(state *gohtn.State) error {
-		current, err := state.Property("gamma")
-		if err != nil {
-			return err
-		}
-		sensor, err := state.Sensor("gamma")
-		if err != nil {
-			return err
-		}
-		gammaSensor := sensor.(*gohtn.SimpleSensor)
-		gammaSensor.Set(current + 0.20)
 		return nil
 	}
 	gammaTask := gohtn.NewPrimitiveTask("gamma", []gohtn.Condition{
@@ -140,7 +129,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(result)
+		log.Printf("state after iteration: %d: %s", iteration, result.String())
 
 		if goal.IsComplete() {
 			log.Println("goal reached")
