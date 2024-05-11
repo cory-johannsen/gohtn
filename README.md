@@ -30,8 +30,7 @@ The example used emulates a simple interaction with a vendor that follows a basi
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Start Day
-    Start Day --> Wait
+    [*] --> Wait: On Duty
     Wait --> Bark: Observe Customer
     Wait --> [*]: No Customer
     Bark --> Greet: Attract Customer
@@ -42,5 +41,5 @@ stateDiagram-v2
     Charge --> Wait: Customer Disengage
     Dispense --> Wave
     Wave --> Wait
-    Wave --> [*]: End Day
+    Wave --> [*]: Off Duty
 ```
