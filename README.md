@@ -33,20 +33,19 @@ stateDiagram-v2
     [*] --> Wait
     state Wait {
         [*] --> Bark: Observe Customer
-        [*] --> Wait: No Customer
+        [*] --> [*]: No Customer
     }
-    Wait --> [*]
     state Bark {
         [*] --> Greet: Attract Customer
-        [*] --> Wait: Customer Disengage
+        [*] --> [*]: Customer Disengage
     }
     state Greet {
         [*] --> Charge: Customer Places Order
-        [*] --> Wait: Customer Disengage
+        [*] --> [*]: Customer Disengage
     }
     state Charge {
         [*] --> Dispense: Customer Pays
-        [*] --> Wait: Customer Disengage
+        [*] --> [*]: Customer Disengage
     }
     state Dispense {
         [*] --> Wave
