@@ -10,11 +10,11 @@ type Property func(state *State) float64
 
 // State is represented as an array of Sensors and a map of named Properties.
 type State struct {
-	Sensors    []Sensor            `json:"sensors"`
+	Sensors    map[string]Sensor   `json:"sensors"`
 	Properties map[string]Property `json:"properties"`
 }
 
-func NewState(sensors []Sensor, properties map[string]Property) *State {
+func NewState(sensors map[string]Sensor, properties map[string]Property) *State {
 	return &State{Sensors: sensors, Properties: properties}
 }
 
@@ -27,18 +27,17 @@ func (s *State) Property(name string) (float64, error) {
 }
 
 func (s *State) Sensor(name string) (Sensor, error) {
-	for _, sensor := range s.Sensors {
-		if sensor.Name() == name {
-			return sensor, nil
-		}
+	sensor, ok := s.Sensors[name]
+	if !ok {
+		return nil, fmt.Errorf("no sensor with name %s", name)
 	}
-	return nil, fmt.Errorf("no sensor with name %s", name)
+	return sensor, nil
 }
 
 func (s *State) String() string {
 	sensors := make([]string, 0)
-	for i := range s.Sensors {
-		sensors = append(sensors, fmt.Sprintf("{%s}", s.Sensors[i].String()))
+	for _, sensor := range s.Sensors {
+		sensors = append(sensors, fmt.Sprintf("{%s}", sensor.String()))
 	}
 	properties := make([]string, 0)
 	for k, v := range s.Properties {

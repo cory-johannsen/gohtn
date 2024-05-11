@@ -1,0 +1,9 @@
+{
+  "name": "alpha",
+  "preconditions": [
+    "alphaFlag",
+    "alphaGTE"
+  ],
+  "action": "alphaAction",
+  "complete": false
+}

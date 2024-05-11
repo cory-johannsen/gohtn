@@ -1,0 +1,9 @@
+{
+  "name": "beta",
+  "preconditions": [
+    "betaFlag",
+    "betaGTE"
+  ],
+  "action": "betaAction",
+  "complete": false
+}

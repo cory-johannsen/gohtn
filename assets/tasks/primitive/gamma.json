@@ -1,0 +1,9 @@
+{
+  "name": "gamma",
+  "preconditions": [
+    "gammaFlag",
+    "gammaGTE"
+  ],
+  "action": "gammaAction",
+  "complete": false
+}

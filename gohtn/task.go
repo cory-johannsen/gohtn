@@ -81,12 +81,12 @@ func (t *PrimitiveTask) String() string {
 // GoalTask implements the HTN goal Task, composed of preconditions that are other Tasks.  The goal Task is considered
 // complete when all condition Tasks are themselves complete.
 type GoalTask struct {
-	Preconditions []TaskCondition `json:"preconditions"`
-	Complete      bool            `json:"complete"`
-	TaskName      string          `json:"name"`
+	Preconditions []*TaskCondition `json:"preconditions"`
+	Complete      bool             `json:"complete"`
+	TaskName      string           `json:"name"`
 }
 
-func NewGoalTask(name string, preconditions []TaskCondition) *GoalTask {
+func NewGoalTask(name string, preconditions []*TaskCondition) *GoalTask {
 	return &GoalTask{
 		Preconditions: preconditions,
 		Complete:      false,

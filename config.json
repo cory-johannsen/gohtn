@@ -1,4 +1,7 @@
 {
   "assetRoot": "assets",
-  "sensorPath": "sensors"
+  "conditionPath": "conditions",
+  "sensorPath": "sensors",
+  "taskPath": "tasks",
+  "taskGraphPath": "domain/domain.json"
 }
