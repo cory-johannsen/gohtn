@@ -29,6 +29,7 @@ References:
 The example used emulates a simple interaction with a vendor that follows a basic state diagram:
 
 ```mermaid
+stateDiagram-v2
     [*] --> Wait
     Wait --> [*]
 
