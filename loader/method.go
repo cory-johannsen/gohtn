@@ -24,7 +24,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 			return nil
 		}
 		methodName := info.Name()
-		method, err := loadMethod(path, htnEngine)
+		method, err := LoadMethod(path, htnEngine)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 	return methods, nil
 }
 
-func loadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
+func LoadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
 	spec := &MethodSpec{}
 	buffer, err := os.ReadFile(path)
 	if err != nil {

@@ -25,7 +25,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	}
 	htnEngine.Conditions = conditions
 
-	htnEngine.Actions["alpha"] = func(state *gohtn.State) error {
+	htnEngine.Actions["alphaAction"] = func(state *gohtn.State) error {
 		current, err := state.Property("beta")
 		if err != nil {
 			return err
@@ -38,7 +38,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 		betaSensor.Set(current + 0.10)
 		return nil
 	}
-	htnEngine.Actions["beta"] = func(state *gohtn.State) error {
+	htnEngine.Actions["betaAction"] = func(state *gohtn.State) error {
 		current, err := state.Property("gamma")
 		if err != nil {
 			return err
@@ -51,7 +51,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 		gammaSensor.Set(current + 0.20)
 		return nil
 	}
-	htnEngine.Actions["gamma"] = func(state *gohtn.State) error {
+	htnEngine.Actions["gammaAction"] = func(state *gohtn.State) error {
 		return nil
 	}
 
@@ -76,7 +76,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	}
 	htnEngine.Methods = methods
 
-	taskGraph, err := loader.LoadTaskGraph(cfg)
+	taskGraph, err := loader.LoadTaskGraph(cfg, htnEngine)
 	if err != nil {
 		panic(err)
 	}

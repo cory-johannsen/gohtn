@@ -29,7 +29,7 @@ func LoadConditions(cfg *config.Config) (engine.Conditions, error) {
 		conditionSubpath := strings.TrimPrefix(path, fmt.Sprintf("%s/", conditionsPath))
 		pathComponents := strings.Split(conditionSubpath, "/")
 		conditionType := ConditionType(pathComponents[0])
-		conditionName := info.Name()
+		conditionName := strings.TrimSuffix(info.Name(), ".json")
 		condition, err := loadCondition(conditionType, path)
 		if err != nil {
 			return err

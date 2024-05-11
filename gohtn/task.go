@@ -132,14 +132,6 @@ type Method struct {
 	Name       string      `json:"name"`
 }
 
-func NewMethod(name string, conditions []Condition, tasks []Task) *Method {
-	return &Method{
-		Name:       name,
-		Conditions: conditions,
-		Tasks:      tasks,
-	}
-}
-
 func (m *Method) Applies(state *State) bool {
 	log.Printf("checking if method {%s} applies", m.Name)
 	for _, condition := range m.Conditions {
@@ -190,13 +182,6 @@ type CompoundTask struct {
 	Methods  []*Method `json:"methods"`
 	TaskName string    `json:"name"`
 	Complete bool      `json:"complete"`
-}
-
-func NewCompoundTask(name string, methods []*Method) *CompoundTask {
-	return &CompoundTask{
-		TaskName: name,
-		Methods:  methods,
-	}
 }
 
 func (c *CompoundTask) Execute(state *State) (*State, error) {
