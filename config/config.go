@@ -6,4 +6,5 @@ type Config struct {
 	SensorPath    string `json:"sensorPath"`
 	TaskPath      string `json:"taskPath"`
 	TaskGraphPath string `json:"taskGraphPath"`
+	MethodPath    string `json:"methodPath"`
 }

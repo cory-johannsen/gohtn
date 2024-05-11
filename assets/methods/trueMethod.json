@@ -1,0 +1,8 @@
+{
+  "name": "trueMethod",
+  "conditions": [
+    "iterationsLTE",
+    "compoundTrue"
+  ],
+  "tasks": []
+}

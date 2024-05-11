@@ -70,6 +70,12 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	}
 	log.Printf("Loaded %d tasks", len(tasks))
 
+	methods, err := loader.LoadMethods(cfg, htnEngine)
+	if err != nil {
+		panic(err)
+	}
+	htnEngine.Methods = methods
+
 	taskGraph, err := loader.LoadTaskGraph(cfg)
 	if err != nil {
 		panic(err)
