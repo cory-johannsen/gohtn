@@ -31,24 +31,14 @@ The example used emulates a simple interaction with a vendor that follows a basi
 ```mermaid
 stateDiagram-v2
     [*] --> Wait
-    state Wait {
-        [*] --> Bark: Observe Customer
-        [*] --> [*]: No Customer
-    }
-    state Bark {
-        [*] --> Greet: Attract Customer
-        [*] --> [*]: Customer Disengage
-    }
-    state Greet {
-        [*] --> Charge: Customer Places Order
-        [*] --> [*]: Customer Disengage
-    }
-    state Charge {
-        [*] --> Dispense: Customer Pays
-        [*] --> [*]: Customer Disengage
-    }
-    state Dispense {
-        [*] --> Wave
-    }
+    Wait --> Bark: Observe Customer
+    Wait --> [*]: No Customer
+    Bark --> Greet: Attract Customer
+    Bark --> [*]: Customer Disengage
+    Greet --> Charge: Customer Places Order
+    Greet --> [*]: Customer Disengage
+    Charge  --> Dispense: Customer Pays
+    Charge --> [*]: Customer Disengage
+    Dispense --> Wave
     Wave --> [*]
 ```
