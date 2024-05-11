@@ -34,11 +34,11 @@ stateDiagram-v2
     Wait --> Bark: Observe Customer
     Wait --> [*]: No Customer
     Bark --> Greet: Attract Customer
-    Bark --> [*]: Customer Disengage
+    Bark --> Wait: Customer Disengage
     Greet --> Charge: Customer Places Order
-    Greet --> [*]: Customer Disengage
+    Greet --> Wait: Customer Disengage
     Charge  --> Dispense: Customer Pays
-    Charge --> [*]: Customer Disengage
+    Charge --> Wait: Customer Disengage
     Dispense --> Wave
     Wave --> [*]
 ```
