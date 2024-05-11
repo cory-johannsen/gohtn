@@ -23,3 +23,18 @@ Supported tasks:
 References:
 - https://en.wikipedia.org/wiki/Hierarchical_task_network
 - https://www.gameaipro.com/GameAIPro/GameAIPro_Chapter12_Exploring_HTN_Planners_through_Example.pdf
+
+## Example
+
+The example used emulates a simple interaction with a vendor that follows a basic state diagram:
+
+```mermaid
+vendor
+    [*] --> Wait
+    Wait --> [*]
+
+    Wait --> Dispense
+    Dispense --> Charge
+    Charge --> Wave
+    Wave --> [*]
+```
