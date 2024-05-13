@@ -1,0 +1,10 @@
+{
+  "name": "Bark",
+  "preconditions": [
+    "OnDuty",
+    "Waiting",
+    "CustomerInRange"
+  ],
+  "action": "BarkAtCustomer",
+  "complete": false
+}

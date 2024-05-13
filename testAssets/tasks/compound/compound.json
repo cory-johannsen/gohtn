@@ -1,0 +1,8 @@
+{
+  "name": "compound",
+  "preconditions": [
+    "trueMethod",
+    "falseMethod"
+  ],
+  "complete": false
+}

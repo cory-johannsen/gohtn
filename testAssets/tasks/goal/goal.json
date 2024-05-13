@@ -1,0 +1,10 @@
+{
+  "name": "goal",
+  "preconditions": [
+    "alpha",
+    "beta",
+    "gamma",
+    "compound"
+  ],
+  "complete": false
+}

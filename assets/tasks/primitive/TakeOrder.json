@@ -1,0 +1,10 @@
+{
+  "name": "TakeOrder",
+  "preconditions": [
+    "OnDuty",
+    "CustomerEngaged",
+    "CustomerReadyToOrder"
+  ],
+  "action": "ChargeCustomer",
+  "complete": false
+}

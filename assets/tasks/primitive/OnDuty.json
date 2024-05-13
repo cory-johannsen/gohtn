@@ -1,0 +1,8 @@
+{
+  "name": "OnDuty",
+  "preconditions": [
+    "InWorkHours"
+  ],
+  "action": "StartWork",
+  "complete": false
+}

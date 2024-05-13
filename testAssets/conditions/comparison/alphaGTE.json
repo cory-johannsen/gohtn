@@ -1,0 +1,5 @@
+{
+  "comparison": ">=",
+  "value": 0.65,
+  "property": "alpha"
+}

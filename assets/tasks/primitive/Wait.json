@@ -1,0 +1,9 @@
+{
+  "name": "Wait",
+  "preconditions": [
+    "OnDuty",
+    "Idle"
+  ],
+  "action": "LookForCustomer",
+  "complete": false
+}

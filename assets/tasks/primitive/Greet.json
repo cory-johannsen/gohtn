@@ -1,0 +1,9 @@
+{
+  "name": "Greet",
+  "preconditions": [
+    "OnDuty",
+    "CustomerEngaged"
+  ],
+  "action": "GreetCustomer",
+  "complete": false
+}

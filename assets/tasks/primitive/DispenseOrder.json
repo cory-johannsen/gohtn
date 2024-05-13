@@ -1,0 +1,11 @@
+{
+  "name": "DispenseOrder",
+  "preconditions": [
+    "OnDuty",
+    "CustomerEngaged",
+    "OrderPlaced",
+    "PaymentAccepted"
+  ],
+  "action": "DispenseOrder",
+  "complete": false
+}
