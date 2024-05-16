@@ -17,14 +17,14 @@ const (
 )
 
 func LoadSensors(cfg *config.Config) ([]gohtn.Sensor, error) {
-	sensorPath := fmt.Sprintf("%s/%s", cfg.AssetRoot, cfg.SensorPath)
+	sensorPath := filepath.Join(cfg.AssetRoot, cfg.SensorPath)
 	sensors := make([]gohtn.Sensor, 0)
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
-		sensorSubpath := strings.TrimPrefix(path, fmt.Sprintf("%s/", sensorPath))
-		pathComponents := strings.Split(sensorSubpath, "/")
+		sensorSubpath := strings.TrimPrefix(path, fmt.Sprintf("%s%s", sensorPath, string(os.PathSeparator)))
+		pathComponents := strings.Split(sensorSubpath, string(os.PathSeparator))
 		sensorType := SensorType(pathComponents[0])
 		sensor, err := loadSensor(sensorType, path)
 		if err != nil {

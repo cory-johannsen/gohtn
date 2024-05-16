@@ -1,0 +1,5 @@
+{
+  "comparison": ">",
+  "lhs": "CustomersInRange",
+  "rhs": "CustomersEngaged"
+}

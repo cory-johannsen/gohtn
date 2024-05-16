@@ -1,7 +1,8 @@
 {
   "name": "OnDuty",
   "preconditions": [
-    "InWorkHours"
+    "AfterWorkStart",
+    "BeforeWorkEnd"
   ],
   "action": "StartWork",
   "complete": false

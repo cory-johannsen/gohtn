@@ -78,7 +78,7 @@ func loadTasks(cfg *config.Config, taskType TaskType, path string, engine *engin
 		if info.IsDir() {
 			return nil
 		}
-		task, err := loadTask(cfg, taskType, path, engine)
+		task, err := LoadTask(cfg, taskType, path, engine)
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func loadTasks(cfg *config.Config, taskType TaskType, path string, engine *engin
 	return tasks, nil
 }
 
-func loadTask(cfg *config.Config, taskType TaskType, path string, engine *engine.Engine) (gohtn.Task, error) {
+func LoadTask(cfg *config.Config, taskType TaskType, path string, engine *engine.Engine) (gohtn.Task, error) {
 	spec := &TaskSpec{}
 	buffer, err := os.ReadFile(path)
 	if err != nil {

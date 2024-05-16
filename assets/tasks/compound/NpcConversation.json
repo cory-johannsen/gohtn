@@ -1,0 +1,9 @@
+{
+  "name": "NpcConversation",
+  "preconditions": [
+    "CustomerNotInRange",
+    "CustomerDisengage",
+    "Default"
+  ],
+  "complete": false
+}

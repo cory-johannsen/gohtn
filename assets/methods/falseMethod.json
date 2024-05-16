@@ -1,8 +1,0 @@
-{
-  "name": "falseMethod",
-  "conditions": [
-    "iterationsLTE",
-    "compoundFalse"
-  ],
-  "tasks": []
-}

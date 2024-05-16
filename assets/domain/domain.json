@@ -1,24 +1,6 @@
 {
   "root": {
-    "task":"goal",
-    "children": [
-      {
-        "task": "alpha",
-        "children": []
-      },
-      {
-        "task": "beta",
-        "children": [
-          {
-            "task": "gamma",
-            "children": []
-          }
-        ]
-      },
-      {
-        "task": "compound",
-        "children": []
-      }
-    ]
+    "task":"OnDuty",
+    "children": []
   }
 }

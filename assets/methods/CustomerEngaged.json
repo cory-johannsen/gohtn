@@ -1,0 +1,9 @@
+{
+  "name": "CustomerEngaged",
+  "conditions": [
+    "WorkHours",
+    "CustomersInRange",
+    "CustomerEngaged"
+  ],
+  "tasks": ["Greet"]
+}

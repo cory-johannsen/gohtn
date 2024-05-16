@@ -25,33 +25,17 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	}
 	htnEngine.Conditions = conditions
 
-	htnEngine.Actions["alphaAction"] = func(state *gohtn.State) error {
-		current, err := state.Property("beta")
-		if err != nil {
-			return err
-		}
-		sensor, err := state.Sensor("beta")
-		if err != nil {
-			return err
-		}
-		betaSensor := sensor.(*gohtn.SimpleSensor)
-		betaSensor.Set(current + 0.10)
+	htnEngine.Actions["Wait"] = func(state *gohtn.State) error {
+		log.Println("waiting")
 		return nil
 	}
-	htnEngine.Actions["betaAction"] = func(state *gohtn.State) error {
-		current, err := state.Property("gamma")
-		if err != nil {
-			return err
-		}
-		sensor, err := state.Sensor("gamma")
-		if err != nil {
-			return err
-		}
-		gammaSensor := sensor.(*gohtn.SimpleSensor)
-		gammaSensor.Set(current + 0.20)
+
+	htnEngine.Actions["StartWork"] = func(state *gohtn.State) error {
+		log.Println("starting work shift")
 		return nil
 	}
-	htnEngine.Actions["gammaAction"] = func(state *gohtn.State) error {
+	htnEngine.Actions["EndWork"] = func(state *gohtn.State) error {
+		log.Println("ending work shift")
 		return nil
 	}
 

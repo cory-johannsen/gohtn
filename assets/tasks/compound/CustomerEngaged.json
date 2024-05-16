@@ -1,0 +1,10 @@
+{
+  "name": "CustomerEngaged",
+  "preconditions": [
+    "CustomerNotInRange",
+    "CustomerIsNPC",
+    "CustomerIsPlayer",
+    "Default"
+  ],
+  "complete": false
+}

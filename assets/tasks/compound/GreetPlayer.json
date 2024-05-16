@@ -1,0 +1,9 @@
+{
+  "name": "GreetPlayer",
+  "preconditions": [
+    "CustomerNotInRange",
+    "PlayerConversation",
+    "Default"
+  ],
+  "complete": false
+}

@@ -1,0 +1,9 @@
+{
+  "name": "PlayerConversation",
+  "preconditions": [
+    "CustomerNotInRange",
+    "CustomerDisengage",
+    "Default"
+  ],
+  "complete": false
+}

@@ -1,0 +1,8 @@
+{
+  "name": "CustomerNotInRange",
+  "conditions": [
+    "WorkHours",
+    "CustomersNotInRange"
+  ],
+  "tasks": ["Observe"]
+}

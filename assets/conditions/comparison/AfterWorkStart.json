@@ -1,0 +1,5 @@
+{
+  "comparison": ">=",
+  "value": 9,
+  "property": "HourOfDay"
+}

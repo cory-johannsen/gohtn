@@ -1,0 +1,8 @@
+{
+  "name": "Default",
+  "conditions": [
+    "WorkHours",
+    "NotEngaged"
+  ],
+  "tasks": ["Idle"]
+}

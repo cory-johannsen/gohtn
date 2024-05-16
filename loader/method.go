@@ -38,7 +38,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 	return methods, nil
 }
 
-func LoadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
+func LoadMethod(cfg *config.Config, path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
 	spec := &MethodSpec{}
 	buffer, err := os.ReadFile(path)
 	if err != nil {
@@ -63,7 +63,12 @@ func LoadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
 	for _, taskName := range spec.Tasks {
 		task, ok := htnEngine.Tasks[taskName]
 		if !ok {
-			return nil, fmt.Errorf("unknown task: %s", taskName)
+			loadedTask, err := LoadTask(cfg, taskType, taskPath, htnEngine)
+			if err != nil {
+				return nil, err
+			}
+			task = loadedTask
+			htnEngine.Tasks[taskName] = task
 		}
 		method.Tasks = append(method.Tasks, task)
 	}
