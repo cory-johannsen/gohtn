@@ -19,6 +19,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 		Methods:    make(engine.Methods),
 	}
 
+	log.Println("loading conditions")
 	conditions, err := loader.LoadConditions(cfg)
 	if err != nil {
 		panic(err)
@@ -39,6 +40,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 		return nil
 	}
 
+	log.Println("loading sensors")
 	sensors, err := loader.LoadSensors(cfg)
 	if err != nil {
 		log.Fatal(err)
@@ -48,18 +50,22 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 		log.Printf("%s", sensor.String())
 	}
 
-	tasks, err := loader.LoadTasks(cfg, htnEngine)
+	log.Println("loading tasks")
+	taskLoader := &loader.TaskLoader{}
+	tasks, err := taskLoader.LoadTasks(cfg, htnEngine)
 	if err != nil {
 		panic(err)
 	}
 	log.Printf("Loaded %d tasks", len(tasks))
 
-	methods, err := loader.LoadMethods(cfg, htnEngine)
+	log.Println("loading methods")
+	methods, err := loader.LoadMethods(cfg, taskLoader, htnEngine)
 	if err != nil {
 		panic(err)
 	}
 	htnEngine.Methods = methods
 
+	log.Println("loading task graph")
 	taskGraph, err := loader.LoadTaskGraph(cfg, htnEngine)
 	if err != nil {
 		panic(err)
@@ -78,14 +84,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	log.Println("initializing HTN engine")
 	htnEngine := initializeEngine(cfg)
 
 	// Initialize the state from the sensors
+	log.Println("initializing state")
 	state := gohtn.NewState(
 		htnEngine.Sensors,
 		map[string]gohtn.Property{
-			"alpha": func(state *gohtn.State) float64 {
-				sensor, err := state.Sensor("alpha")
+			"HourOfDay": func(state *gohtn.State) float64 {
+				sensor, err := state.Sensor("HourOfDay")
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -95,8 +103,9 @@ func main() {
 				}
 				return val
 			},
-			"beta": func(state *gohtn.State) float64 {
-				sensor, err := state.Sensor("beta")
+			"CustomersInRange": func(state *gohtn.State) float64 {
+				// TODO: fetch and filter the possible customers by range and return the subset
+				sensor, err := state.Sensor("CustomersInRange")
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -106,19 +115,9 @@ func main() {
 				}
 				return val
 			},
-			"gamma": func(state *gohtn.State) float64 {
-				sensor, err := state.Sensor("gamma")
-				if err != nil {
-					log.Fatal(err)
-				}
-				val, err := sensor.Get()
-				if err != nil {
-					log.Fatal(err)
-				}
-				return val
-			},
-			"iterations": func(state *gohtn.State) float64 {
-				sensor, err := state.Sensor("iterations")
+			"CustomersEngaged": func(state *gohtn.State) float64 {
+				// TODO: fetch and filter the possible customers in range and filter to only those that are not engaged
+				sensor, err := state.Sensor("CustomersEngaged")
 				if err != nil {
 					log.Fatal(err)
 				}

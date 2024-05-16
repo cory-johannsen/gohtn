@@ -16,7 +16,7 @@ type MethodSpec struct {
 	Tasks      []string `json:"tasks"`
 }
 
-func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, error) {
+func LoadMethods(cfg *config.Config, taskLoader *TaskLoader, htnEngine *engine.Engine) (engine.Methods, error) {
 	methodsPath := fmt.Sprintf("%s/%s", cfg.AssetRoot, cfg.MethodPath)
 	methods := make(engine.Methods)
 	walkFn := func(path string, info os.FileInfo, err error) error {
@@ -24,7 +24,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 			return nil
 		}
 		methodName := info.Name()
-		method, err := LoadMethod(path, htnEngine)
+		method, err := LoadMethod(cfg, path, taskLoader, htnEngine)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 	return methods, nil
 }
 
-func LoadMethod(cfg *config.Config, path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
+func LoadMethod(cfg *config.Config, path string, taskLoader *TaskLoader, htnEngine *engine.Engine) (*gohtn.Method, error) {
 	spec := &MethodSpec{}
 	buffer, err := os.ReadFile(path)
 	if err != nil {
@@ -63,7 +63,11 @@ func LoadMethod(cfg *config.Config, path string, htnEngine *engine.Engine) (*goh
 	for _, taskName := range spec.Tasks {
 		task, ok := htnEngine.Tasks[taskName]
 		if !ok {
-			loadedTask, err := LoadTask(cfg, taskType, taskPath, htnEngine)
+			taskSpec, ok := taskLoader.Specs[taskName]
+			if !ok {
+				return nil, fmt.Errorf("unknown task: %s", taskName)
+			}
+			loadedTask, err := taskLoader.LoadTask(cfg, taskSpec, htnEngine)
 			if err != nil {
 				return nil, err
 			}

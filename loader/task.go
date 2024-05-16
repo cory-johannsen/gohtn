@@ -7,6 +7,7 @@ import (
 	"github.com/cory-johannsen/gohtn/config"
 	"github.com/cory-johannsen/gohtn/engine"
 	"github.com/cory-johannsen/gohtn/gohtn"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -27,6 +28,10 @@ type TaskSpec struct {
 	TaskType      TaskType `json:"type,omitempty"`
 }
 
+type TaskLoader struct {
+	Specs map[string]*TaskSpec
+}
+
 func initTask(taskType TaskType) (gohtn.Task, error) {
 	switch taskType {
 	case Primitive:
@@ -39,60 +44,78 @@ func initTask(taskType TaskType) (gohtn.Task, error) {
 	return nil, errors.New("invalid task type")
 }
 
-func LoadTasks(cfg *config.Config, engine *engine.Engine) ([]gohtn.Task, error) {
-	tasks := make([]gohtn.Task, 0)
-	// filepath.Walk traverses in lexicographical order, but the tasks needed to be loaded primitive, compound, then goal to satisfy dependencies in order
-	// load the primitive tasks
+func (l *TaskLoader) LoadTasks(cfg *config.Config, engine *engine.Engine) ([]gohtn.Task, error) {
+	if l.Specs == nil {
+		l.Specs = make(map[string]*TaskSpec)
+	}
+
+	// filepath.Walk traverses in lexicographical order, but the tasks need to be loaded primitive, compound, then goal to satisfy dependencies in order
+	// load the primitive task specs
+	log.Printf("loading primitive task specs")
 	primitivePath := fmt.Sprintf("%s/%s/%s", cfg.AssetRoot, cfg.TaskPath, Primitive)
-	primitiveTasks, err := loadTasks(cfg, Primitive, primitivePath, engine)
+	primitiveTasks, err := loadTaskSpecs(Primitive, primitivePath)
 	if err != nil {
 		return nil, err
 	}
-	for _, primitiveTask := range primitiveTasks {
-		tasks = append(tasks, primitiveTask)
+	for name, primitiveTask := range primitiveTasks {
+		l.Specs[name] = primitiveTask
 	}
-	// load the compound tasks
+	// load the compound task specs
+	log.Printf("loading compound task specs")
 	compoundPath := fmt.Sprintf("%s/%s/%s", cfg.AssetRoot, cfg.TaskPath, Compound)
-	compoundTasks, err := loadTasks(cfg, Compound, compoundPath, engine)
+	compoundTasks, err := loadTaskSpecs(Compound, compoundPath)
 	if err != nil {
 		return nil, err
 	}
-	for _, compoundTask := range compoundTasks {
-		tasks = append(tasks, compoundTask)
+	for name, compoundTask := range compoundTasks {
+		l.Specs[name] = compoundTask
 	}
-	// load the goal tasks
+	// load the goal task specs
+	log.Printf("loading goal task specs")
 	goalPath := fmt.Sprintf("%s/%s/%s", cfg.AssetRoot, cfg.TaskPath, Goal)
-	goalTasks, err := loadTasks(cfg, Goal, goalPath, engine)
+	goalTasks, err := loadTaskSpecs(Goal, goalPath)
 	if err != nil {
 		return nil, err
 	}
-	for _, goalTask := range goalTasks {
-		tasks = append(tasks, goalTask)
+	for name, goalTask := range goalTasks {
+		l.Specs[name] = goalTask
+	}
+
+	// iterate the specs and load the tasks
+	log.Printf("loading tasks from specs")
+	tasks := make([]gohtn.Task, 0)
+	for _, taskSpec := range l.Specs {
+		task, err := l.LoadTask(cfg, taskSpec, engine)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, task)
 	}
 	return tasks, nil
 }
 
-func loadTasks(cfg *config.Config, taskType TaskType, path string, engine *engine.Engine) ([]gohtn.Task, error) {
-	tasks := make([]gohtn.Task, 0)
+func loadTaskSpecs(taskType TaskType, path string) (map[string]*TaskSpec, error) {
+	specs := make(map[string]*TaskSpec)
 	walkFn := func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
+		if info == nil || info.IsDir() {
 			return nil
 		}
-		task, err := LoadTask(cfg, taskType, path, engine)
+		log.Printf("loading %s task spec %s", taskType, path)
+		spec, err := loadTaskSpec(taskType, path)
 		if err != nil {
 			return err
 		}
-		tasks = append(tasks, task)
+		specs[spec.TaskName] = spec
 		return nil
 	}
 	err := filepath.Walk(path, walkFn)
 	if err != nil {
 		return nil, fmt.Errorf("error walking the path %q: %v", path, err)
 	}
-	return tasks, nil
+	return specs, nil
 }
 
-func LoadTask(cfg *config.Config, taskType TaskType, path string, engine *engine.Engine) (gohtn.Task, error) {
+func loadTaskSpec(taskType TaskType, path string) (*TaskSpec, error) {
 	spec := &TaskSpec{}
 	buffer, err := os.ReadFile(path)
 	if err != nil {
@@ -103,19 +126,24 @@ func LoadTask(cfg *config.Config, taskType TaskType, path string, engine *engine
 		return nil, err
 	}
 	spec.TaskType = taskType
-	task, err := initTask(taskType)
+	return spec, nil
+}
+
+func (l *TaskLoader) LoadTask(cfg *config.Config, spec *TaskSpec, engine *engine.Engine) (gohtn.Task, error) {
+	task, err := initTask(spec.TaskType)
 	if err != nil {
 		return nil, err
 	}
-	t, err := instantiateTask(cfg, task, spec, engine)
+	log.Printf("instantiating task %s", spec.TaskName)
+	t, err := l.instantiateTask(cfg, task, spec, engine)
 	if err != nil {
 		return nil, err
 	}
-	engine.Tasks[t.Name()] = t
+	engine.Tasks[spec.TaskName] = t
 	return task, nil
 }
 
-func instantiateTask(cfg *config.Config, task gohtn.Task, spec *TaskSpec, engine *engine.Engine) (gohtn.Task, error) {
+func (l *TaskLoader) instantiateTask(cfg *config.Config, task gohtn.Task, spec *TaskSpec, engine *engine.Engine) (gohtn.Task, error) {
 	var action gohtn.Action
 	if len(spec.Action) > 0 {
 		// the action is a name used to resolve the function from the action registry
@@ -144,7 +172,7 @@ func instantiateTask(cfg *config.Config, task gohtn.Task, spec *TaskSpec, engine
 			if !ok {
 				// direct load the method
 				methodPath := fmt.Sprintf("%s/%s/%s.json", cfg.AssetRoot, cfg.MethodPath, methodName)
-				loadedMethod, err := LoadMethod(methodPath, engine)
+				loadedMethod, err := LoadMethod(cfg, methodPath, l, engine)
 				if err != nil {
 					return nil, err
 				}

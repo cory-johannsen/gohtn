@@ -2,7 +2,7 @@
   "name": "CustomerNotInRange",
   "conditions": [
     "WorkHours",
-    "CustomersNotInRange"
+    "NoCustomersInRange"
   ],
   "tasks": ["Observe"]
 }

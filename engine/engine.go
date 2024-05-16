@@ -1,6 +1,8 @@
 package engine
 
-import "github.com/cory-johannsen/gohtn/gohtn"
+import (
+	"github.com/cory-johannsen/gohtn/gohtn"
+)
 
 type Sensors map[string]gohtn.Sensor
 type Actions map[string]gohtn.Action
