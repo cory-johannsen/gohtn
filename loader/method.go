@@ -49,9 +49,9 @@ func LoadMethod(cfg *config.Config, path string, taskLoader *TaskLoader, htnEngi
 		return nil, err
 	}
 	method := &gohtn.Method{
-		Name:       spec.Name,
-		Conditions: make([]gohtn.Condition, 0),
-		Tasks:      make([]gohtn.Task, 0),
+		Name:          spec.Name,
+		Conditions:    make([]gohtn.Condition, 0),
+		TaskResolvers: make(gohtn.TaskResolvers),
 	}
 	for _, conditionName := range spec.Conditions {
 		condition, ok := htnEngine.Conditions[conditionName]
@@ -61,20 +61,20 @@ func LoadMethod(cfg *config.Config, path string, taskLoader *TaskLoader, htnEngi
 		method.Conditions = append(method.Conditions, condition)
 	}
 	for _, taskName := range spec.Tasks {
-		task, ok := htnEngine.Tasks[taskName]
+		taskResolver, ok := htnEngine.TaskResolvers[taskName]
 		if !ok {
 			taskSpec, ok := taskLoader.Specs[taskName]
 			if !ok {
-				return nil, fmt.Errorf("unknown task: %s", taskName)
+				return nil, fmt.Errorf("unknown taskResolver spec: %s", taskName)
 			}
 			loadedTask, err := taskLoader.LoadTask(cfg, taskSpec, htnEngine)
 			if err != nil {
 				return nil, err
 			}
-			task = loadedTask
-			htnEngine.Tasks[taskName] = task
+			taskResolver = loadedTask
+			htnEngine.TaskResolvers[taskName] = taskResolver
 		}
-		method.Tasks = append(method.Tasks, task)
+		method.TaskResolvers[taskName] = taskResolver
 	}
 	return method, nil
 }

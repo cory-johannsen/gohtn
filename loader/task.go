@@ -44,12 +44,12 @@ func initTask(taskType TaskType) (gohtn.Task, error) {
 	return nil, errors.New("invalid task type")
 }
 
-func (l *TaskLoader) LoadTasks(cfg *config.Config, engine *engine.Engine) ([]gohtn.Task, error) {
+func (l *TaskLoader) LoadTaskResolvers(cfg *config.Config, engine *engine.Engine) (map[string]gohtn.TaskResolver, error) {
 	if l.Specs == nil {
 		l.Specs = make(map[string]*TaskSpec)
 	}
 
-	// filepath.Walk traverses in lexicographical order, but the tasks need to be loaded primitive, compound, then goal to satisfy dependencies in order
+	// filepath.Walk traverses in lexicographical order, but the taskResolvers need to be loaded primitive, compound, then goal to satisfy dependencies in order
 	// load the primitive task specs
 	log.Printf("loading primitive task specs")
 	primitivePath := fmt.Sprintf("%s/%s/%s", cfg.AssetRoot, cfg.TaskPath, Primitive)
@@ -81,17 +81,17 @@ func (l *TaskLoader) LoadTasks(cfg *config.Config, engine *engine.Engine) ([]goh
 		l.Specs[name] = goalTask
 	}
 
-	// iterate the specs and load the tasks
-	log.Printf("loading tasks from specs")
-	tasks := make([]gohtn.Task, 0)
+	// iterate the specs and load the taskResolvers
+	log.Printf("loading taskResolvers from specs")
+	taskResolvers := make(map[string]gohtn.TaskResolver)
 	for _, taskSpec := range l.Specs {
-		task, err := l.LoadTask(cfg, taskSpec, engine)
+		taskResolver, err := l.LoadTask(cfg, taskSpec, engine)
 		if err != nil {
 			return nil, err
 		}
-		tasks = append(tasks, task)
+		taskResolvers[taskSpec.TaskName] = taskResolver
 	}
-	return tasks, nil
+	return taskResolvers, nil
 }
 
 func loadTaskSpecs(taskType TaskType, path string) (map[string]*TaskSpec, error) {
@@ -129,18 +129,26 @@ func loadTaskSpec(taskType TaskType, path string) (*TaskSpec, error) {
 	return spec, nil
 }
 
-func (l *TaskLoader) LoadTask(cfg *config.Config, spec *TaskSpec, engine *engine.Engine) (gohtn.Task, error) {
+func (l *TaskLoader) LoadTask(cfg *config.Config, spec *TaskSpec, engine *engine.Engine) (gohtn.TaskResolver, error) {
 	task, err := initTask(spec.TaskType)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("instantiating task %s", spec.TaskName)
-	t, err := l.instantiateTask(cfg, task, spec, engine)
-	if err != nil {
-		return nil, err
+	resolver := func() (gohtn.Task, error) {
+		existing, ok := engine.Tasks[spec.TaskName]
+		if ok {
+			return existing, nil
+		}
+		log.Printf("instantiating task %s", spec.TaskName)
+		t, err := l.instantiateTask(cfg, task, spec, engine)
+		if err != nil {
+			return nil, err
+		}
+		engine.Tasks[spec.TaskName] = t
+		return t, nil
 	}
-	engine.Tasks[spec.TaskName] = t
-	return task, nil
+	engine.TaskResolvers[spec.TaskName] = resolver
+	return resolver, nil
 }
 
 func (l *TaskLoader) instantiateTask(cfg *config.Config, task gohtn.Task, spec *TaskSpec, engine *engine.Engine) (gohtn.Task, error) {
@@ -168,9 +176,11 @@ func (l *TaskLoader) instantiateTask(cfg *config.Config, task gohtn.Task, spec *
 	case Compound:
 		// compound task preconditions are Methods
 		for _, methodName := range spec.Preconditions {
+			log.Printf("task %s fetching method %s", spec.TaskName, methodName)
 			method, ok := engine.Methods[methodName]
 			if !ok {
 				// direct load the method
+				log.Printf("task %s method %s not found, loading it", spec.TaskName, methodName)
 				methodPath := fmt.Sprintf("%s/%s/%s.json", cfg.AssetRoot, cfg.MethodPath, methodName)
 				loadedMethod, err := LoadMethod(cfg, methodPath, l, engine)
 				if err != nil {
@@ -185,12 +195,16 @@ func (l *TaskLoader) instantiateTask(cfg *config.Config, task gohtn.Task, spec *
 	case Goal:
 		// goal task preconditions are TaskConditions
 		for _, taskName := range spec.Preconditions {
-			conditionTask, ok := engine.Tasks[taskName]
+			taskResolver, ok := engine.TaskResolvers[taskName]
 			if !ok {
 				return nil, fmt.Errorf("task %s precondition task %s not found", spec.TaskName, taskName)
 			}
+			task, err := taskResolver()
+			if err != nil {
+				return nil, err
+			}
 			task.(*gohtn.GoalTask).Preconditions = append(task.(*gohtn.GoalTask).Preconditions, &gohtn.TaskCondition{
-				Task: conditionTask,
+				Task: task,
 			})
 			task.(*gohtn.GoalTask).TaskName = spec.TaskName
 		}

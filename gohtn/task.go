@@ -13,6 +13,10 @@ type Task interface {
 	String() string
 }
 
+type Tasks map[string]Task
+type TaskResolver func() (Task, error)
+type TaskResolvers map[string]TaskResolver
+
 // Action is an action applied by a Task.
 type Action func(state *State) error
 
@@ -78,20 +82,12 @@ func (t *PrimitiveTask) String() string {
 	return fmt.Sprintf("[%s] preconditions: [%s], complete: %t", t.Name(), strings.Join(preconditions, ","), t.Complete)
 }
 
-// GoalTask implements the HTN goal Task, composed of preconditions that are other Tasks.  The goal Task is considered
-// complete when all condition Tasks are themselves complete.
+// GoalTask implements the HTN goal Task, composed of preconditions that are other TaskResolvers.  The goal Task is considered
+// complete when all condition TaskResolvers are themselves complete.
 type GoalTask struct {
 	Preconditions []*TaskCondition `json:"preconditions"`
 	Complete      bool             `json:"complete"`
 	TaskName      string           `json:"name"`
-}
-
-func NewGoalTask(name string, preconditions []*TaskCondition) *GoalTask {
-	return &GoalTask{
-		Preconditions: preconditions,
-		Complete:      false,
-		TaskName:      name,
-	}
 }
 
 func (g *GoalTask) Execute(state *State) (*State, error) {
@@ -127,9 +123,9 @@ func (g *GoalTask) String() string {
 }
 
 type Method struct {
-	Conditions []Condition `json:"conditions"`
-	Tasks      []Task      `json:"tasks"`
-	Name       string      `json:"name"`
+	Conditions    []Condition
+	TaskResolvers TaskResolvers
+	Name          string
 }
 
 func (m *Method) Applies(state *State) bool {
@@ -147,7 +143,11 @@ func (m *Method) Execute(state *State) (int64, error) {
 	log.Printf("executing method {%s}", m.Name)
 	var executed = int64(0)
 	tasks := make([]Task, 0)
-	for _, task := range m.Tasks {
+	for _, taskResolver := range m.TaskResolvers {
+		task, err := taskResolver()
+		if err != nil {
+			return 0, err
+		}
 		tasks = append([]Task{task}, tasks...)
 	}
 	for _, task := range tasks {
@@ -169,8 +169,8 @@ func (m *Method) String() string {
 		conditions = append(conditions, fmt.Sprintf("{%s}", condition.String()))
 	}
 	tasks := make([]string, 0)
-	for _, task := range m.Tasks {
-		tasks = append(tasks, fmt.Sprintf("{%s}", task.String()))
+	for taskName := range m.TaskResolvers {
+		tasks = append(tasks, fmt.Sprintf("{%s}", taskName))
 	}
 	return fmt.Sprintf("Method %s: conditions: [%s], tasks: [%s]", m.Name, strings.Join(conditions, ","), strings.Join(tasks, ","))
 }

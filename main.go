@@ -13,10 +13,10 @@ import (
 
 func initializeEngine(cfg *config.Config) *engine.Engine {
 	htnEngine := &engine.Engine{
-		Actions:    make(engine.Actions),
-		Conditions: make(engine.Conditions),
-		Tasks:      make(engine.Tasks),
-		Methods:    make(engine.Methods),
+		Actions:       make(engine.Actions),
+		Conditions:    make(engine.Conditions),
+		TaskResolvers: make(gohtn.TaskResolvers),
+		Methods:       make(engine.Methods),
 	}
 
 	log.Println("loading conditions")
@@ -52,7 +52,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 
 	log.Println("loading tasks")
 	taskLoader := &loader.TaskLoader{}
-	tasks, err := taskLoader.LoadTasks(cfg, htnEngine)
+	tasks, err := taskLoader.LoadTaskResolvers(cfg, htnEngine)
 	if err != nil {
 		panic(err)
 	}
