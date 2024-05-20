@@ -9,14 +9,19 @@ import (
 	"log"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 func initializeEngine(cfg *config.Config) *engine.Engine {
 	htnEngine := &engine.Engine{
+		Sensors:       make(engine.Sensors),
 		Actions:       make(engine.Actions),
 		Conditions:    make(engine.Conditions),
 		TaskResolvers: make(gohtn.TaskResolvers),
+		Tasks:         make(gohtn.Tasks),
 		Methods:       make(engine.Methods),
+		Planner:       nil,
+		Domain:        nil,
 	}
 
 	log.Println("loading conditions")
@@ -25,6 +30,21 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 		panic(err)
 	}
 	htnEngine.Conditions = conditions
+
+	htnEngine.Conditions["CustomerIsNPC"] = &gohtn.FuncCondition{
+		Name: "CustomerIsNPC",
+		Evaluator: func(state *gohtn.State) bool {
+			// TODO: fetch the current customer for the vendor and check if they are an NPC
+			return false
+		},
+	}
+	htnEngine.Conditions["CustomerIsPlayer"] = &gohtn.FuncCondition{
+		Name: "CustomerIsNPC",
+		Evaluator: func(state *gohtn.State) bool {
+			// TODO: fetch the current customer for the vendor and check if they are the player
+			return true
+		},
+	}
 
 	htnEngine.Actions["Wait"] = func(state *gohtn.State) error {
 		log.Println("waiting")
@@ -48,6 +68,14 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	log.Printf("Loaded %d sensors", len(sensors))
 	for _, sensor := range sensors {
 		log.Printf("%s", sensor.String())
+		htnEngine.Sensors[sensor.Name()] = sensor
+	}
+	now := time.Now()
+	htnEngine.Sensors["HourOfDay"] = &gohtn.HourOfDaySensor{
+		TickSensor: gohtn.TickSensor{
+			StartedAt:    now,
+			TickDuration: time.Minute,
+		},
 	}
 
 	log.Println("loading tasks")

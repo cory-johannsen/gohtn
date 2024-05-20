@@ -178,3 +178,18 @@ func (t *TaskCondition) IsMet(state *State) bool {
 func (t *TaskCondition) String() string {
 	return fmt.Sprintf("TaskCondition: %s, complete: %t", t.Task.Name(), t.Task.IsComplete())
 }
+
+type Evaluator func(state *State) bool
+
+type FuncCondition struct {
+	Name      string    `json:"name"`
+	Evaluator Evaluator `json:"evaluator"`
+}
+
+func (f *FuncCondition) IsMet(state *State) bool {
+	return f.Evaluator(state)
+}
+
+func (f *FuncCondition) String() string {
+	return fmt.Sprintf("FuncCondition: %s", f.Name)
+}

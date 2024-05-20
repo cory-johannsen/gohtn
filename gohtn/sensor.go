@@ -1,6 +1,9 @@
 package gohtn
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Sensor are represented by a generic 64 bit floating point Value.
 type Sensor interface {
@@ -13,10 +16,6 @@ type Sensor interface {
 type SimpleSensor struct {
 	Value      float64 `json:"value"`
 	SensorName string  `json:"name"`
-}
-
-func NewSimpleSensor(name string, value float64) *SimpleSensor {
-	return &SimpleSensor{SensorName: name, Value: value}
 }
 
 func (s *SimpleSensor) Get() (float64, error) {
@@ -33,4 +32,41 @@ func (s *SimpleSensor) Set(value float64) {
 
 func (s *SimpleSensor) String() string {
 	return fmt.Sprintf("%s: %f", s.SensorName, s.Value)
+}
+
+type TickSensor struct {
+	StartedAt    time.Time
+	TickDuration time.Duration
+}
+
+func (s *TickSensor) Get() (float64, error) {
+	now := time.Now()
+	elapsed := now.Sub(s.StartedAt)
+	ticks := elapsed.Nanoseconds() / s.TickDuration.Nanoseconds()
+	return float64(ticks), nil
+}
+
+func (s *TickSensor) Name() string {
+	return "TimeOfDay"
+}
+
+func (s *TickSensor) String() string {
+	value, _ := s.Get()
+	return fmt.Sprintf("%s: %f", s.Name(), value)
+}
+
+type HourOfDaySensor struct {
+	TickSensor
+}
+
+func (s *HourOfDaySensor) Get() (float64, error) {
+	now := time.Now()
+	elapsed := now.Sub(s.StartedAt)
+	ticks := elapsed.Nanoseconds() / s.TickDuration.Nanoseconds()
+	hour := ticks % 24
+	return float64(hour), nil
+}
+
+func (s *HourOfDaySensor) Name() string {
+	return "HourOfDay"
 }
