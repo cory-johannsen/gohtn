@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/cory-johannsen/gohtn/actor"
 	"github.com/cory-johannsen/gohtn/gohtn"
 )
 
@@ -11,6 +12,7 @@ type Conditions map[string]gohtn.Condition
 type Methods map[string]*gohtn.Method
 
 type Engine struct {
+	Actors        actor.Actors
 	Sensors       Sensors
 	Actions       Actions
 	Conditions    Conditions

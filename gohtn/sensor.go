@@ -2,6 +2,7 @@ package gohtn
 
 import (
 	"fmt"
+	"github.com/cory-johannsen/gohtn/actor"
 	"time"
 )
 
@@ -69,4 +70,21 @@ func (s *HourOfDaySensor) Get() (float64, error) {
 
 func (s *HourOfDaySensor) Name() string {
 	return "HourOfDay"
+}
+
+type CustomersEngagedSensor struct {
+	Vendor *actor.Vendor
+}
+
+func (s *CustomersEngagedSensor) Get() (float64, error) {
+	return 0, nil
+}
+
+func (s *CustomersEngagedSensor) Name() string {
+	return "CustomersEngaged"
+}
+
+func (s *CustomersEngagedSensor) String() string {
+	value, _ := s.Get()
+	return fmt.Sprintf("CustomersEngaged: %d", int64(value))
 }
