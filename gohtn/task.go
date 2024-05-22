@@ -29,15 +29,6 @@ type PrimitiveTask struct {
 	TaskName      string      `json:"name"`
 }
 
-func NewPrimitiveTask(name string, preconditions []Condition, action Action) *PrimitiveTask {
-	return &PrimitiveTask{
-		Preconditions: preconditions,
-		Action:        action,
-		Complete:      false,
-		TaskName:      name,
-	}
-}
-
 func (t *PrimitiveTask) Execute(state *State) (*State, error) {
 	preconditions := make([]string, 0)
 	for _, condition := range t.Preconditions {

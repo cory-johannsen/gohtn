@@ -1,6 +1,9 @@
 package gohtn
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 type Condition interface {
 	IsMet(state *State) bool
@@ -48,37 +51,64 @@ const (
 	GTE Comparison = ">="
 )
 
-// ComparisonCondition is a condition that is met if the given Property compares to the specified Value using the given Comparison function
-type ComparisonCondition struct {
-	Comparison Comparison `json:"comparison"`
-	Value      float64    `json:"value"`
-	Property   string     `json:"property"`
-}
+type Comparator[T any] func(value T, property T, comparison Comparison) bool
 
-func (g *ComparisonCondition) IsMet(state *State) bool {
-	value, err := state.Property(g.Property)
-	if err != nil {
-		return false
-	}
-	switch g.Comparison {
+var IntComparator = func(value int, property int, comparison Comparison) bool {
+	switch comparison {
 	case EQ:
-		return value >= g.Value
+		return value == property
 	case NEQ:
-		return value != g.Value
+		return value != property
 	case LT:
-		return value < g.Value
+		return value < property
 	case LTE:
-		return value <= g.Value
+		return value <= property
 	case GT:
-		return value > g.Value
+		return value > property
 	case GTE:
-		return value >= g.Value
+		return value >= property
 	}
 	return false
 }
 
-func (g *ComparisonCondition) String() string {
-	return fmt.Sprintf("ComparisonCondition: property %s, value %f, comparison %s", g.Property, g.Value, g.Comparison)
+var Int64Comparator = func(value int64, property int64, comparison Comparison) bool {
+	switch comparison {
+	case EQ:
+		return value == property
+	case NEQ:
+		return value != property
+	case LT:
+		return value < property
+	case LTE:
+		return value <= property
+	case GT:
+		return value > property
+	case GTE:
+		return value >= property
+	}
+	return false
+}
+
+// ComparisonCondition is a condition that is met if the given Property compares to the specified Value using the given Comparison function
+type ComparisonCondition[T any] struct {
+	Comparison Comparison
+	Value      T
+	Property   string
+	Comparator Comparator[T]
+}
+
+func (c *ComparisonCondition[T]) IsMet(state *State) bool {
+	property, err := state.Property(c.Property)
+	if err != nil {
+		return false
+	}
+	value := property.(*Property[T]).Value(state)
+	log.Printf("ComparisonCondition comparing %s(%v) %s %v", c.Property, value, c.Comparison, c.Value)
+	return c.Comparator(c.Value, value, c.Comparison)
+}
+
+func (c *ComparisonCondition[T]) String() string {
+	return fmt.Sprintf("ComparisonCondition: property %s %s value %v", c.Property, c.Comparison, c.Value)
 }
 
 // PropertyComparisonCondition is a condition that compares to Property values
@@ -89,14 +119,16 @@ type PropertyComparisonCondition struct {
 }
 
 func (p *PropertyComparisonCondition) IsMet(state *State) bool {
-	lhs, err := state.Property(p.LHS)
+	lhsProperty, err := state.Property(p.LHS)
 	if err != nil {
 		return false
 	}
-	rhs, err := state.Property(p.RHS)
+	lhs := lhsProperty.(Property[any]).Value(state).(float64)
+	rhsProperty, err := state.Property(p.RHS)
 	if err != nil {
 		return false
 	}
+	rhs := rhsProperty.(Property[any]).Value(state).(float64)
 	switch p.Comparison {
 	case EQ:
 		return lhs == rhs
@@ -134,15 +166,16 @@ type LogicalCondition struct {
 }
 
 func (l *LogicalCondition) IsMet(state *State) bool {
-	lhsFloat, err := state.Property(l.LHSProperty)
+	lhsProperty, err := state.Property(l.LHSProperty)
 	if err != nil {
 		return false
 	}
-	lhs := lhsFloat > 0
-	rhsFloat, err := state.Property(l.RHSProperty)
+	lhs := lhsProperty.(Property[any]).Value(state).(float64) > 0
+	rhsProperty, err := state.Property(l.RHSProperty)
+	rhsFloat := float64(0)
 	if err != nil {
 		if l.Operator == NOT {
-			rhsFloat = 0.0
+			rhsFloat = rhsProperty.(Property[any]).Value(state).(float64)
 		} else {
 			return false
 		}

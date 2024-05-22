@@ -24,10 +24,10 @@ func evaluateNode(node *TaskNode, state *State) []Task {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("evaluating node {%s}", task.String())
+	log.Printf("evaluating task node {%s}", task.String())
 	tasks := make([]Task, 0)
 	if !task.IsComplete() {
-		log.Printf("node {%s} is not complete", task.String())
+		log.Printf("task node {%s} is not complete", task.String())
 		tasks = append(tasks, task)
 	}
 	for _, child := range node.Children {
@@ -57,11 +57,10 @@ func (p *Planner) Plan(state *State) (Plan, error) {
 func Execute(plan Plan, state *State) (*State, error) {
 	log.Printf("executing plan with %d TaskResolvers", len(plan))
 	for _, task := range plan {
-		postState, err := task.Execute(state)
+		_, err := task.Execute(state)
 		if err != nil {
 			return nil, err
 		}
-		log.Printf("postState: %s", postState.String())
 	}
 	return state, nil
 }

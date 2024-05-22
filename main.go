@@ -16,7 +16,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 
 	htnEngine := &engine.Engine{
 		Actors:        make(actor.Actors),
-		Sensors:       make(engine.Sensors),
+		Sensors:       make(gohtn.Sensors),
 		Actions:       make(engine.Actions),
 		Conditions:    make(engine.Conditions),
 		TaskResolvers: make(gohtn.TaskResolvers),
@@ -28,12 +28,15 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 
 	vendor := &actor.Vendor{
 		NPC: actor.NPC{
-			ActorName: "Vendor",
+			ActorName:     "Vendor",
+			ActorLocation: &actor.Point{X: 0.0, Y: 0.0},
 		},
+		Range: 10.0,
 	}
 	htnEngine.Actors[vendor.Name()] = vendor
 	player := &actor.Player{
-		ActorName: "Player",
+		ActorName:     "Player",
+		ActorLocation: &actor.Point{X: 20.0, Y: 5.0},
 	}
 	htnEngine.Actors[player.Name()] = player
 
@@ -41,6 +44,41 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	conditions, err := loader.LoadConditions(cfg)
 	if err != nil {
 		panic(err)
+	}
+
+	conditions["AfterWorkStart"] = &gohtn.ComparisonCondition[int64]{
+		Comparison: gohtn.GTE,
+		Value:      9,
+		Property:   "HourOfDay",
+		Comparator: func(value int64, property int64, comparison gohtn.Comparison) bool {
+			return property >= value
+		},
+	}
+	conditions["BeforeWorkEnd"] = &gohtn.ComparisonCondition[int64]{
+		Comparison: gohtn.LTE,
+		Value:      14,
+		Property:   "HourOfDay",
+		Comparator: func(value int64, property int64, comparison gohtn.Comparison) bool {
+			return property <= value
+		},
+	}
+	conditions["CustomerNotEngaged"] = &gohtn.ComparisonCondition[int64]{
+		Comparison: gohtn.EQ,
+		Value:      0,
+		Property:   "CustomersEngaged",
+		Comparator: gohtn.Int64Comparator,
+	}
+	conditions["CustomersInRange"] = &gohtn.ComparisonCondition[int]{
+		Comparison: gohtn.GT,
+		Value:      0,
+		Property:   "CustomersInRange",
+		Comparator: gohtn.IntComparator,
+	}
+	conditions["NoCustomersInRange"] = &gohtn.ComparisonCondition[int]{
+		Comparison: gohtn.EQ,
+		Value:      0,
+		Property:   "CustomersInRange",
+		Comparator: gohtn.IntComparator,
 	}
 	htnEngine.Conditions = conditions
 
@@ -74,25 +112,26 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 	}
 
 	log.Println("loading sensors")
-	sensors, err := loader.LoadSensors(cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Loaded %d sensors", len(sensors))
-	for _, sensor := range sensors {
-		log.Printf("%s", sensor.String())
-		htnEngine.Sensors[sensor.Name()] = sensor
-	}
+
 	now := time.Now()
-	htnEngine.Sensors["HourOfDay"] = &gohtn.HourOfDaySensor{
+	hourOfDaySensor := &gohtn.HourOfDaySensor{
 		TickSensor: gohtn.TickSensor{
 			StartedAt:    now,
-			TickDuration: time.Minute,
+			TickDuration: 10 * time.Second,
 		},
 	}
-	htnEngine.Sensors["CustomersEngaged"] = &gohtn.CustomersEngagedSensor{
+	htnEngine.Sensors["HourOfDay"] = hourOfDaySensor
+
+	customersEngagedSensor := &gohtn.CustomersEngagedSensor{
 		Vendor: vendor,
 	}
+	htnEngine.Sensors["CustomersEngaged"] = customersEngagedSensor
+
+	customersInRangeSensor := &gohtn.CustomersInRangeSensor{
+		Vendor: vendor,
+		Actors: htnEngine.Actors,
+	}
+	htnEngine.Sensors["CustomersInRange"] = customersInRangeSensor
 
 	log.Println("loading taskResolvers")
 	taskLoader := &loader.TaskLoader{}
@@ -124,42 +163,38 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 }
 
 func initializeState(htnEngine *engine.Engine) (*gohtn.State, error) {
-	properties := make(map[string]gohtn.Property)
-	properties["HourOfDay"] = func(state *gohtn.State) float64 {
-		sensor, err := state.Sensor("HourOfDay")
-		if err != nil {
-			log.Fatal(err)
-		}
-		val, err := sensor.Get()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return val
+	properties := make(map[string]any)
+	hourOfDay := &gohtn.Property[int64]{
+		Name: "HourOfDay",
+		Value: func(state *gohtn.State) int64 {
+			sensor, err := state.Sensor("HourOfDay")
+			if err != nil {
+				log.Fatal(err)
+			}
+			val, err := sensor.(*gohtn.HourOfDaySensor).Get()
+			if err != nil {
+				log.Fatal(err)
+			}
+			return val
+		},
 	}
-	properties["CustomersInRange"] = func(state *gohtn.State) float64 {
-		// TODO: fetch and filter the possible customers by range and return the subset
-		sensor, err := state.Sensor("CustomersInRange")
-		if err != nil {
-			log.Fatal(err)
-		}
-		val, err := sensor.Get()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return val
+	properties["HourOfDay"] = hourOfDay
+	customersInRange := &gohtn.Property[int]{
+		Name: "CustomersInRange",
+		Value: func(state *gohtn.State) int {
+			sensor, err := state.Sensor("CustomersInRange")
+			if err != nil {
+				log.Fatal(err)
+			}
+			val, err := sensor.(*gohtn.CustomersInRangeSensor).Get()
+			if err != nil {
+				log.Fatal(err)
+			}
+			return val
+		},
 	}
-	properties["CustomersEngaged"] = func(state *gohtn.State) float64 {
-		// TODO: fetch and filter the possible customers in range and filter to only those that are not engaged
-		sensor, err := state.Sensor("CustomersEngaged")
-		if err != nil {
-			log.Fatal(err)
-		}
-		val, err := sensor.Get()
-		if err != nil {
-			log.Fatal(err)
-		}
-		return val
-	}
+	properties["CustomersInRange"] = customersInRange
+
 	return &gohtn.State{
 		Sensors:    htnEngine.Sensors,
 		Properties: properties,
@@ -181,8 +216,10 @@ func main() {
 		panic(err)
 	}
 	var iteration = 0
+	var walkingRight = true
 	for {
 		log.Printf("iteration %d", iteration)
+		iteration++
 		plan, err := htnEngine.Planner.Plan(state)
 		if err != nil {
 			panic(err)
@@ -197,11 +234,34 @@ func main() {
 			planTasks = append(planTasks, fmt.Sprintf("{%s}", task.String()))
 		}
 		log.Printf("executing plan {%s}", strings.Join(planTasks, ","))
-		result, err := gohtn.Execute(plan, state)
+		_, err = gohtn.Execute(plan, state)
 		if err != nil {
 			panic(err)
 		}
-		log.Printf("state after iteration: %d: %s", iteration, result.String())
+
+		for _, a := range htnEngine.Actors {
+			log.Printf("Actor %s: (%f, %f)", a.Name(), a.Location().X, a.Location().Y)
+		}
+
 		time.Sleep(time.Second)
+
+		// Have the player walk back and forth from -20,5 to 20,5
+		player := htnEngine.Actors["Player"].(*actor.Player)
+
+		if player.Location().X >= 20 {
+			walkingRight = false
+			player.Location().X = 19
+			continue
+		}
+		if player.Location().X <= -20 {
+			walkingRight = true
+			player.Location().X = -19
+			continue
+		}
+		if walkingRight {
+			player.Location().X += 1
+		} else {
+			player.Location().X -= 1
+		}
 	}
 }

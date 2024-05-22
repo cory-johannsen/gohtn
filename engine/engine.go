@@ -5,7 +5,6 @@ import (
 	"github.com/cory-johannsen/gohtn/gohtn"
 )
 
-type Sensors map[string]gohtn.Sensor
 type Actions map[string]gohtn.Action
 type Conditions map[string]gohtn.Condition
 
@@ -13,7 +12,7 @@ type Methods map[string]*gohtn.Method
 
 type Engine struct {
 	Actors        actor.Actors
-	Sensors       Sensors
+	Sensors       gohtn.Sensors
 	Actions       Actions
 	Conditions    Conditions
 	TaskResolvers gohtn.TaskResolvers

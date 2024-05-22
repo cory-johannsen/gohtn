@@ -52,8 +52,6 @@ func LoadConditions(cfg *config.Config) (engine.Conditions, error) {
 
 func initCondition(conditionType ConditionType) (gohtn.Condition, error) {
 	switch conditionType {
-	case Comparison:
-		return &gohtn.ComparisonCondition{}, nil
 	case PropertyComparison:
 		return &gohtn.PropertyComparisonCondition{}, nil
 	case Flag:

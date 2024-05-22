@@ -1,6 +1,24 @@
 {
   "root": {
     "task":"OnDuty",
-    "children": []
+    "children": [
+      {
+        "task":"Observe",
+        "children": [
+          {
+            "task":"Idle",
+            "children": []
+          },
+          {
+            "task":"Greet",
+            "children": []
+          }
+        ]
+      },
+      {
+        "task":"OffDuty",
+        "children": []
+      }
+    ]
   }
 }
