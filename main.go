@@ -48,7 +48,7 @@ func initializeEngine(cfg *config.Config) *engine.Engine {
 
 	conditions["AfterWorkStart"] = &gohtn.ComparisonCondition[int64]{
 		Comparison: gohtn.GTE,
-		Value:      9,
+		Value:      1,
 		Property:   "HourOfDay",
 		Comparator: func(value int64, property int64, comparison gohtn.Comparison) bool {
 			return property >= value
@@ -228,15 +228,16 @@ func main() {
 		if len(plan) == 0 {
 			log.Println("no tasks to execute")
 			break
-		}
-		planTasks := make([]string, 0)
-		for _, task := range plan {
-			planTasks = append(planTasks, fmt.Sprintf("{%s}", task.String()))
-		}
-		log.Printf("executing plan {%s}", strings.Join(planTasks, ","))
-		_, err = gohtn.Execute(plan, state)
-		if err != nil {
-			panic(err)
+		} else {
+			planTasks := make([]string, 0)
+			for _, task := range plan {
+				planTasks = append(planTasks, fmt.Sprintf("{%s}", task.String()))
+			}
+			log.Printf("executing plan {%s}", strings.Join(planTasks, ","))
+			_, err = gohtn.Execute(plan, state)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		for _, a := range htnEngine.Actors {

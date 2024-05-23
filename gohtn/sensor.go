@@ -113,8 +113,11 @@ func (s *CustomersInRangeSensor) Get() (int, error) {
 	vendorLocation := s.Vendor.Location()
 	var inRange = 0
 	for _, a := range s.Actors {
+		if a == s.Vendor {
+			continue
+		}
 		distance := actor.Distance(vendorLocation, a.Location())
-		if distance > s.Vendor.Range {
+		if distance <= s.Vendor.Range {
 			inRange++
 		}
 	}

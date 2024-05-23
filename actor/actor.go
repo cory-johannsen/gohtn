@@ -8,7 +8,9 @@ type Point struct {
 }
 
 func Distance(a *Point, b *Point) float64 {
-	return math.Sqrt((a.X * b.X) + (a.Y * b.Y))
+	xTerm := (b.X - a.X) * (b.X - a.X)
+	yTerm := (b.Y - a.Y) * (b.Y - a.Y)
+	return math.Sqrt(xTerm + yTerm)
 }
 
 type Actor interface {
