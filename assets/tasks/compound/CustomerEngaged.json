@@ -1,7 +1,7 @@
 {
   "name": "CustomerEngaged",
   "preconditions": [
-    "CustomerNotInRange",
+    "CustomerInRange",
     "CustomerIsNPC",
     "CustomerIsPlayer",
     "Default"

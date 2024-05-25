@@ -190,6 +190,7 @@ func initializeState(htnEngine *engine.Engine) (*gohtn.State, error) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			log.Printf("CustomersInRange property: %d customers in range", val)
 			return val
 		},
 	}
@@ -233,7 +234,7 @@ func main() {
 			for _, task := range plan {
 				planTasks = append(planTasks, fmt.Sprintf("{%s}", task.String()))
 			}
-			log.Printf("executing plan {%s}", strings.Join(planTasks, ","))
+			log.Printf("executing plan tasks:\n%s", strings.Join(planTasks, "\n"))
 			_, err = gohtn.Execute(plan, state)
 			if err != nil {
 				panic(err)

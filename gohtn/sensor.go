@@ -117,6 +117,7 @@ func (s *CustomersInRangeSensor) Get() (int, error) {
 			continue
 		}
 		distance := actor.Distance(vendorLocation, a.Location())
+		log.Printf("calculated distance to %s is %f", a.Name(), distance)
 		if distance <= s.Vendor.Range {
 			inRange++
 		}

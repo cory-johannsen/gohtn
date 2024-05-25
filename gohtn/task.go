@@ -163,7 +163,7 @@ func (m *Method) String() string {
 	for taskName := range m.TaskResolvers {
 		tasks = append(tasks, fmt.Sprintf("{%s}", taskName))
 	}
-	return fmt.Sprintf("Method %s: conditions: [%s], tasks: [%s]", m.Name, strings.Join(conditions, ","), strings.Join(tasks, ","))
+	return fmt.Sprintf("Method %s:\n  conditions: \n   %s\n  tasks: \n   %s", m.Name, strings.Join(conditions, ",\n   "), strings.Join(tasks, ",\n   "))
 }
 
 // CompoundTask implements the HTN compound task, which consists of a ranked list of methods and a name.
@@ -195,7 +195,7 @@ func (c *CompoundTask) Execute(state *State) (*State, error) {
 		return nil, err
 	}
 	if executedTasks == 0 {
-		c.Complete = true
+		log.Printf("method {%s} execute zero tasks", c.Name())
 	}
 
 	return state, nil
@@ -214,5 +214,5 @@ func (c *CompoundTask) String() string {
 	for _, method := range c.Methods {
 		methods = append(methods, fmt.Sprintf("{%s}", method.String()))
 	}
-	return fmt.Sprintf("CompoundTask %s: methods: [%s]", c.Name(), strings.Join(methods, ","))
+	return fmt.Sprintf("CompoundTask %s: methods: \n %s\n", c.Name(), strings.Join(methods, ",\n "))
 }
