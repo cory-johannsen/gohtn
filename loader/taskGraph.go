@@ -41,9 +41,9 @@ func LoadTaskGraph(cfg *config.Config, engine *engine.Engine) (*gohtn.TaskGraph,
 }
 
 func loadTaskNode(spec *TaskNodeSpec, engine *engine.Engine) (*gohtn.TaskNode, error) {
-	task, ok := engine.Tasks[spec.Task]
+	taskResolver, ok := engine.TaskResolvers[spec.Task]
 	if !ok {
-		return nil, fmt.Errorf("task %s not found", spec.Task)
+		return nil, fmt.Errorf("taskResolver %s not found", spec.Task)
 	}
 	children := make([]*gohtn.TaskNode, 0)
 	for _, childSpec := range spec.Children {
@@ -54,8 +54,8 @@ func loadTaskNode(spec *TaskNodeSpec, engine *engine.Engine) (*gohtn.TaskNode, e
 		children = append(children, child)
 	}
 	node := &gohtn.TaskNode{
-		Task:     task,
-		Children: children,
+		TaskResolver: taskResolver,
+		Children:     children,
 	}
 	return node, nil
 }

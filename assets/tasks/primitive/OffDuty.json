@@ -1,0 +1,8 @@
+{
+  "name": "OffDuty",
+  "preconditions": [
+    "NotWorkHours"
+  ],
+  "action": "EndWork",
+  "complete": false
+}

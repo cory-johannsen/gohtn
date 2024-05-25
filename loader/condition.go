@@ -14,21 +14,27 @@ import (
 type ConditionType string
 
 const (
-	Comparison ConditionType = "comparison"
-	Flag       ConditionType = "flag"
-	NotFlag    ConditionType = "notflag"
+	Comparison         ConditionType = "comparison"
+	PropertyComparison ConditionType = "propertycomparison"
+	Flag               ConditionType = "flag"
+	NotFlag            ConditionType = "notflag"
+	Logical            ConditionType = "logical"
 )
 
 func LoadConditions(cfg *config.Config) (engine.Conditions, error) {
-	conditionsPath := fmt.Sprintf("%s/%s", cfg.AssetRoot, cfg.ConditionPath)
+	conditionsPath := filepath.Join(cfg.AssetRoot, cfg.ConditionPath)
 	conditions := make(engine.Conditions)
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
-		conditionSubpath := strings.TrimPrefix(path, fmt.Sprintf("%s/", conditionsPath))
-		pathComponents := strings.Split(conditionSubpath, "/")
+		conditionSubpath := strings.TrimPrefix(path, conditionsPath)
+		pathComponents := strings.Split(conditionSubpath, string(os.PathSeparator))
 		conditionType := ConditionType(pathComponents[0])
+		if len(conditionType) == 0 {
+			// Handle the possibility of a leading slash
+			conditionType = ConditionType(pathComponents[1])
+		}
 		conditionName := strings.TrimSuffix(info.Name(), ".json")
 		condition, err := loadCondition(conditionType, path)
 		if err != nil {
@@ -46,12 +52,14 @@ func LoadConditions(cfg *config.Config) (engine.Conditions, error) {
 
 func initCondition(conditionType ConditionType) (gohtn.Condition, error) {
 	switch conditionType {
-	case Comparison:
-		return &gohtn.ComparisonCondition{}, nil
+	case PropertyComparison:
+		return &gohtn.PropertyComparisonCondition{}, nil
 	case Flag:
 		return &gohtn.FlagCondition{}, nil
 	case NotFlag:
 		return &gohtn.NotFlagCondition{}, nil
+	case Logical:
+		return &gohtn.LogicalCondition{}, nil
 	}
 	return nil, fmt.Errorf("unknown condition type %s", conditionType)
 }

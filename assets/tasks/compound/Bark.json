@@ -1,0 +1,11 @@
+{
+  "name": "Bark",
+  "preconditions": [
+    "CustomerInRange",
+    "CustomerNotInRange",
+    "CustomerEngaged",
+    "CustomerNotEngaged",
+    "Default"
+  ],
+  "complete": false
+}

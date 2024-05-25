@@ -1,0 +1,10 @@
+{
+  "name": "Idle",
+  "preconditions": [
+    "AfterWorkStart",
+    "BeforeWorkEnd",
+    "NoCustomersInRange"
+  ],
+  "action": "Wait",
+  "complete": false
+}

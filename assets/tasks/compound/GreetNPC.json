@@ -1,0 +1,9 @@
+{
+  "name": "GreetNPC",
+  "preconditions": [
+    "CustomerNotInRange",
+    "NpcConversation",
+    "Default"
+  ],
+  "complete": false
+}

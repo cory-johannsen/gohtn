@@ -1,0 +1,11 @@
+{
+  "name": "GreetPlayer",
+  "conditions": [
+    "WorkHours",
+    "CustomersInRange",
+    "CustomersAvailable",
+    "NotEngaged",
+    "CustomerIsPlayer"
+  ],
+  "tasks": ["GreetPlayer"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "PlayerConversation",
+  "conditions": [
+    "WorkHours",
+    "CustomersInRange",
+    "Engaged",
+    "CustomerEngaged",
+    "CustomerIsPlayer"
+  ],
+  "tasks": ["PlayerConversation"]
+}

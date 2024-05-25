@@ -1,0 +1,9 @@
+{
+  "name": "CustomerNotInRange",
+  "conditions": [
+    "WorkHours",
+    "CustomersInRange",
+    "CustomerNotEngaged"
+  ],
+  "tasks": ["Greet"]
+}

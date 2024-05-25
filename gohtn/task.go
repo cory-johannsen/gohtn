@@ -13,6 +13,10 @@ type Task interface {
 	String() string
 }
 
+type Tasks map[string]Task
+type TaskResolver func() (Task, error)
+type TaskResolvers map[string]TaskResolver
+
 // Action is an action applied by a Task.
 type Action func(state *State) error
 
@@ -23,15 +27,6 @@ type PrimitiveTask struct {
 	Complete      bool        `json:"complete"`
 	Action        Action      `json:"action"`
 	TaskName      string      `json:"name"`
-}
-
-func NewPrimitiveTask(name string, preconditions []Condition, action Action) *PrimitiveTask {
-	return &PrimitiveTask{
-		Preconditions: preconditions,
-		Action:        action,
-		Complete:      false,
-		TaskName:      name,
-	}
 }
 
 func (t *PrimitiveTask) Execute(state *State) (*State, error) {
@@ -78,20 +73,12 @@ func (t *PrimitiveTask) String() string {
 	return fmt.Sprintf("[%s] preconditions: [%s], complete: %t", t.Name(), strings.Join(preconditions, ","), t.Complete)
 }
 
-// GoalTask implements the HTN goal Task, composed of preconditions that are other Tasks.  The goal Task is considered
-// complete when all condition Tasks are themselves complete.
+// GoalTask implements the HTN goal Task, composed of preconditions that are other TaskResolvers.  The goal Task is considered
+// complete when all condition TaskResolvers are themselves complete.
 type GoalTask struct {
 	Preconditions []*TaskCondition `json:"preconditions"`
 	Complete      bool             `json:"complete"`
 	TaskName      string           `json:"name"`
-}
-
-func NewGoalTask(name string, preconditions []*TaskCondition) *GoalTask {
-	return &GoalTask{
-		Preconditions: preconditions,
-		Complete:      false,
-		TaskName:      name,
-	}
 }
 
 func (g *GoalTask) Execute(state *State) (*State, error) {
@@ -127,9 +114,9 @@ func (g *GoalTask) String() string {
 }
 
 type Method struct {
-	Conditions []Condition `json:"conditions"`
-	Tasks      []Task      `json:"tasks"`
-	Name       string      `json:"name"`
+	Conditions    []Condition
+	TaskResolvers TaskResolvers
+	Name          string
 }
 
 func (m *Method) Applies(state *State) bool {
@@ -147,7 +134,11 @@ func (m *Method) Execute(state *State) (int64, error) {
 	log.Printf("executing method {%s}", m.Name)
 	var executed = int64(0)
 	tasks := make([]Task, 0)
-	for _, task := range m.Tasks {
+	for _, taskResolver := range m.TaskResolvers {
+		task, err := taskResolver()
+		if err != nil {
+			return 0, err
+		}
 		tasks = append([]Task{task}, tasks...)
 	}
 	for _, task := range tasks {
@@ -169,10 +160,10 @@ func (m *Method) String() string {
 		conditions = append(conditions, fmt.Sprintf("{%s}", condition.String()))
 	}
 	tasks := make([]string, 0)
-	for _, task := range m.Tasks {
-		tasks = append(tasks, fmt.Sprintf("{%s}", task.String()))
+	for taskName := range m.TaskResolvers {
+		tasks = append(tasks, fmt.Sprintf("{%s}", taskName))
 	}
-	return fmt.Sprintf("Method %s: conditions: [%s], tasks: [%s]", m.Name, strings.Join(conditions, ","), strings.Join(tasks, ","))
+	return fmt.Sprintf("Method %s:\n  conditions: \n   %s\n  tasks: \n   %s", m.Name, strings.Join(conditions, ",\n   "), strings.Join(tasks, ",\n   "))
 }
 
 // CompoundTask implements the HTN compound task, which consists of a ranked list of methods and a name.
@@ -204,7 +195,7 @@ func (c *CompoundTask) Execute(state *State) (*State, error) {
 		return nil, err
 	}
 	if executedTasks == 0 {
-		c.Complete = true
+		log.Printf("method {%s} execute zero tasks", c.Name())
 	}
 
 	return state, nil
@@ -223,5 +214,5 @@ func (c *CompoundTask) String() string {
 	for _, method := range c.Methods {
 		methods = append(methods, fmt.Sprintf("{%s}", method.String()))
 	}
-	return fmt.Sprintf("CompoundTask %s: methods: [%s]", c.Name(), strings.Join(methods, ","))
+	return fmt.Sprintf("CompoundTask %s: methods: \n %s\n", c.Name(), strings.Join(methods, ",\n "))
 }

@@ -1,0 +1,11 @@
+{
+  "name": "GreetNPC",
+  "conditions": [
+    "WorkHours",
+    "CustomersInRange",
+    "CustomersAvailable",
+    "NotEngaged",
+    "CustomerIsNPC"
+  ],
+  "tasks": ["GreetNPC"]
+}

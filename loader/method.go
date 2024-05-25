@@ -16,7 +16,7 @@ type MethodSpec struct {
 	Tasks      []string `json:"tasks"`
 }
 
-func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, error) {
+func LoadMethods(cfg *config.Config, taskLoader *TaskLoader, htnEngine *engine.Engine) (engine.Methods, error) {
 	methodsPath := fmt.Sprintf("%s/%s", cfg.AssetRoot, cfg.MethodPath)
 	methods := make(engine.Methods)
 	walkFn := func(path string, info os.FileInfo, err error) error {
@@ -24,7 +24,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 			return nil
 		}
 		methodName := info.Name()
-		method, err := LoadMethod(path, htnEngine)
+		method, err := LoadMethod(cfg, path, taskLoader, htnEngine)
 		if err != nil {
 			return err
 		}
@@ -38,7 +38,7 @@ func LoadMethods(cfg *config.Config, htnEngine *engine.Engine) (engine.Methods, 
 	return methods, nil
 }
 
-func LoadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
+func LoadMethod(cfg *config.Config, path string, taskLoader *TaskLoader, htnEngine *engine.Engine) (*gohtn.Method, error) {
 	spec := &MethodSpec{}
 	buffer, err := os.ReadFile(path)
 	if err != nil {
@@ -49,9 +49,9 @@ func LoadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
 		return nil, err
 	}
 	method := &gohtn.Method{
-		Name:       spec.Name,
-		Conditions: make([]gohtn.Condition, 0),
-		Tasks:      make([]gohtn.Task, 0),
+		Name:          spec.Name,
+		Conditions:    make([]gohtn.Condition, 0),
+		TaskResolvers: make(gohtn.TaskResolvers),
 	}
 	for _, conditionName := range spec.Conditions {
 		condition, ok := htnEngine.Conditions[conditionName]
@@ -61,11 +61,20 @@ func LoadMethod(path string, htnEngine *engine.Engine) (*gohtn.Method, error) {
 		method.Conditions = append(method.Conditions, condition)
 	}
 	for _, taskName := range spec.Tasks {
-		task, ok := htnEngine.Tasks[taskName]
+		taskResolver, ok := htnEngine.TaskResolvers[taskName]
 		if !ok {
-			return nil, fmt.Errorf("unknown task: %s", taskName)
+			taskSpec, ok := taskLoader.Specs[taskName]
+			if !ok {
+				return nil, fmt.Errorf("unknown taskResolver spec: %s", taskName)
+			}
+			loadedTask, err := taskLoader.LoadTask(cfg, taskSpec, htnEngine)
+			if err != nil {
+				return nil, err
+			}
+			taskResolver = loadedTask
+			htnEngine.TaskResolvers[taskName] = taskResolver
 		}
-		method.Tasks = append(method.Tasks, task)
+		method.TaskResolvers[taskName] = taskResolver
 	}
 	return method, nil
 }

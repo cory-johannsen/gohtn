@@ -1,22 +1,22 @@
 {
   "root": {
-    "task":"goal",
+    "task":"OnDuty",
     "children": [
       {
-        "task": "alpha",
-        "children": []
-      },
-      {
-        "task": "beta",
+        "task":"Observe",
         "children": [
           {
-            "task": "gamma",
+            "task":"Idle",
+            "children": []
+          },
+          {
+            "task":"Greet",
             "children": []
           }
         ]
       },
       {
-        "task": "compound",
+        "task":"OffDuty",
         "children": []
       }
     ]

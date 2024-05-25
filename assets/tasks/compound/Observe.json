@@ -1,0 +1,9 @@
+{
+  "name": "Observe",
+  "preconditions": [
+    "CustomerInRange",
+    "CustomerNotInRange",
+    "Default"
+  ],
+  "complete": false
+}
